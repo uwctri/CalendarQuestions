@@ -175,9 +175,9 @@ calendarQuestions.css = `
 </style>
 `;
 
+// Todo: Hide future dates
 // Todo: All None/Zero/No/Yes button(s)?
 // Todo: Tabbing between days for quick entry
-// Todo: Hide future dates
 
 calendarQuestions.clearCalendarData = function (calendar) {
     $(`textarea[name=${calendar}]`).val('{}');
@@ -190,7 +190,7 @@ function showDateQuestions(calendar, date) {
 
 function jsonSaveCalendar(calendar, date, variable, value) {
     calendarQuestions.json[calendar][date][variable]['value'] = value;
-    calendarQuestions.json[calendar][date]['_complete'] = Object.entries(calendarQuestions.json[calendar][date]).map(x=>x[1]['value']||true).every(x=>x) ? '1' : '0';
+    calendarQuestions.json[calendar][date]['_complete'] = Object.entries(calendarQuestions.json[calendar][date]).map(x=>x[1]['value']).filter(x => x !== undefined).every(x=>x) ? '1' : '0';
     $(`textarea[name=${calendar}]`).val(JSON.stringify(calendarQuestions.json[calendar]));
 }
 
@@ -225,8 +225,10 @@ $(document).ready(function () {
         if ( !isEmpty(calObj.range) ) {
             $.each(calObj.range, function() {
                 for (let day of moment.range(this.start,this.end).by('days')) {
-                    if ( isEmpty(Object.entries(json[day.format('YYYY-MM-DD')])) ) 
+                    if ( isEmpty(Object.entries(json[day.format('YYYY-MM-DD')])) ) {
                         json[day.format('YYYY-MM-DD')] = {};
+                        json[day.format('YYYY-MM-DD')]["_complete"] = 0;
+                    }
                     $.each(calObj.questions, function() {
                         if ( !isEmpty(Object.entries(json[day.format('YYYY-MM-DD')][this.variable])) )
                             return;
@@ -235,7 +237,6 @@ $(document).ready(function () {
                         json[day.format('YYYY-MM-DD')][this.variable]['type'] = this.type;
                         json[day.format('YYYY-MM-DD')][this.variable]['value'] = "";
                     });
-                    json[day.format('YYYY-MM-DD')]["_complete"] = 0;
                 }
             });
         } else {

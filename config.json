@@ -32,6 +32,11 @@
                     "type": "text"
                 },
                 {
+                    "key": "nofuture",
+                    "name": "<b>Prevent Future Data Entry</b><br>Stop users from entering data on days in the future",
+                    "type": "checkbox"
+                },
+                {
                     "key": "calendar-questions",
                     "name": "<b>Questions</b>",
                     "type": "sub_settings",
