@@ -1,0 +1,121 @@
+{
+    "name": "Calendar Questions",
+    "description": "Ask simple questions in a calendar format with specified date ranges and branching logic",
+    "namespace": "UWMadison\\calendarQuestions",
+    "authors": [
+        {
+            "name": "Adam Nunez",
+            "email": "Adam.Nunez@ctri.wisc.edu",
+            "institution": "UW Madison - Center for Tobacco Research and Intervention "
+        }
+    ],
+    "permissions": [
+        "redcap_data_entry_form",
+        "redcap_every_page_top"
+    ],
+    "project-settings": [
+        {
+            "key": "calendar-config",
+            "name": "<b>Calendar</b>",
+            "type": "sub_settings",
+            "repeatable":true,
+            "sub_settings":[
+                {
+                    "key": "name",
+                    "name": "<b>Unique Calendar Name</b><br>Exact field label used to place the calendar",
+                    "type": "text",
+                    "required": true
+                },
+                {
+                    "key": "width",
+                    "name": "<b>Form width</b><br>As percent (90%) or px (default of 800px)",
+                    "type": "text"
+                },
+                {
+                    "key": "calendar-questions",
+                    "name": "<b>Questions</b>",
+                    "type": "sub_settings",
+                    "repeatable":true,
+                    "sub_settings":[
+                        {
+                            "key": "question",
+                            "name": "<b>Question Text</b>",
+                            "type": "text"
+                        },
+                        {
+                            "key": "question-type",
+                            "name": "<b>Type</b>",
+                            "type": "radio",
+                            "choices": [
+                                {
+                                    "value": "yesno",
+                                    "name": "Yes/No"
+                                },
+                                {
+                                    "value": "text",
+                                    "name": "Text"
+                                }
+                            ]
+                        },
+                        {
+                            "key": "question-variable-name",
+                            "name": "<b>Variable Name</b><br>Name of data element stored in json",
+                            "type": "text"
+                        },
+                        {
+                            "key": "question-branch-event",
+                            "name": "<b>Branching Logic</b><br>Display question only if ...",
+                            "type": "event-list"
+                        },
+                        {
+                            "key": "question-branch-variable",
+                            "name": "<b>Branching Logic Variable</b>",
+                            "type": "field-list"
+                        },
+                        {
+                            "key": "question-branch-value",
+                            "name": "<b>Branching Logic Value</b>",
+                            "type": "text"
+                        }
+                    ] 
+                },
+                {
+                    "key": "calendar-range",
+                    "name": "<b>Range(s)</b>",
+                    "type": "sub_settings",
+                    "repeatable":true,
+                    "sub_settings":[
+                        {
+                            "key": "start-event",
+                            "name": "<b>Start Range</b>",
+                            "type": "event-list"
+                        },
+                        {
+                            "key": "start-variable",
+                            "name": "<b>Start Range Variable</b>",
+                            "type": "field-list"
+                        },
+                        {
+                            "key": "end-event",
+                            "name": "<b>End Range</b>",
+                            "type": "event-list"
+                        },
+                        {
+                            "key": "end-variable",
+                            "name": "<b>End Range Variable</b>",
+                            "type": "field-list"
+                        },
+                        {
+                            "key": "end-offset",
+                            "name": "<b>End Range Offset</b><br>Optional instead of end range. Positive or Negative value<br>relative to start of range",
+                            "type": "text"
+                        }
+                    ] 
+                }
+            ]
+        }
+    ],
+    "compatibility": {
+        "redcap-version-min": "9.8.0"
+    }
+}
