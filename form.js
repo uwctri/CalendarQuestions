@@ -34,8 +34,8 @@ calendarQuestions.html.template = `
         <textarea rows="1" class="event-item-input-text" data-variable="<%= event.variable %>"></textarea>
         <% } %>
         <% if(event.type == "yesno") { %> 
-        <input name="<%= event.variable %>-radio" class="event-item-input-yesno" type="radio" data-variable="<%= event.variable %>" value="1"><span class="event-item-input-label">Yes</span>
-        <input name="<%= event.variable %>-radio" class="event-item-input-yesno" type="radio" data-variable="<%= event.variable %>" value="0"><span class="event-item-input-label">No</span>
+        <input name="<%= event.variable %>-<%= event.date %>-radio" class="event-item-input-yesno" type="radio" data-variable="<%= event.variable %>" value="1"><span class="event-item-input-label">Yes</span>
+        <input name="<%= event.variable %>-<%= event.date %>-radio" class="event-item-input-yesno" type="radio" data-variable="<%= event.variable %>" value="0"><span class="event-item-input-label">No</span>
         <% } %>
       </div>
     <% }); %>
@@ -74,13 +74,10 @@ calendarQuestions.css = `
       cursor: pointer;
       -webkit-user-select: none;
       /* Chrome/Safari */
-
       -moz-user-select: none;
       /* Firefox */
-
       -ms-user-select: none;
       /* IE10+ */
-
     }
     .clndr .clndr-controls .clndr-previous-button:hover,
     .clndr .clndr-controls .clndr-next-button:hover {
@@ -122,7 +119,13 @@ calendarQuestions.css = `
     .clndr .clndr-grid .days .day.event .day-number,
     .clndr .clndr-grid .days .empty.event .day-number {
       padding-bottom: 4px;
-      border-bottom: 2px solid #3883a3;
+      border-bottom: 3px solid #3883a3;
+    }
+    .clndr .clndr-grid .days .day.event.day-complete .day-number{
+        border-bottom: 3px solid green !important;
+    }
+    .clndr .clndr-grid .days .day.event.day-incomplete .day-number{
+        border-bottom: 3px solid red !important;
     }
     .clndr .clndr-grid .days .day.adjacent-month .day-number,
     .clndr .clndr-grid .days .empty.adjacent-month .day-number {
@@ -172,17 +175,31 @@ calendarQuestions.css = `
 </style>
 `;
 
-// Todo: Color underlining (green, red, yellow?)
 // Todo: All None/Zero/No/Yes button(s)?
-// Todo: Tabbing between days
+// Todo: Tabbing between days for quick entry
+// Todo: Hide future dates
+
+calendarQuestions.clearCalendarData = function (calendar) {
+    $(`textarea[name=${calendar}]`).val('{}');
+}
 
 function showDateQuestions(calendar, date) {
     $('.event-item').hide();
     $(`.event-item[data-date=${date}]`).show();
 }
 
-function clearCalendarData(calendar) {
-    $(`textarea[name=${calendar}]`).val('{}');
+function jsonSaveCalendar(calendar, date, variable, value) {
+    calendarQuestions.json[calendar][date][variable]['value'] = value;
+    calendarQuestions.json[calendar][date]['_complete'] = Object.entries(calendarQuestions.json[calendar][date]).map(x=>x[1]['value']||true).every(x=>x) ? '1' : '0';
+    $(`textarea[name=${calendar}]`).val(JSON.stringify(calendarQuestions.json[calendar]));
+}
+
+function colorDayComplete(calendar, isComplete, date) {
+    $(`#${calendar} .calendar-day-${date}`).removeClass('day-complete day-incomplete');
+    if ( isComplete == '1' )
+        $(`#${calendar} .calendar-day-${date}`).addClass('day-complete');
+    else
+        $(`#${calendar} .calendar-day-${date}`).addClass('day-incomplete');
 }
 
 $(document).ready(function () {
@@ -208,16 +225,17 @@ $(document).ready(function () {
         if ( !isEmpty(calObj.range) ) {
             $.each(calObj.range, function() {
                 for (let day of moment.range(this.start,this.end).by('days')) {
-                    if ( isEmpty(json[day.format('YYYY-MM-DD')]) ) {
+                    if ( isEmpty(Object.entries(json[day.format('YYYY-MM-DD')])) ) 
                         json[day.format('YYYY-MM-DD')] = {};
-                        $.each(calObj.questions, function() {
-                            json[day.format('YYYY-MM-DD')][this.variable] = {};
-                            json[day.format('YYYY-MM-DD')][this.variable]['text'] = this.text;
-                            json[day.format('YYYY-MM-DD')][this.variable]['type'] = this.type;
-                            json[day.format('YYYY-MM-DD')][this.variable]['value'] = "";
-                        });
-                        json[day.format('YYYY-MM-DD')]["_complete"] = 0;
-                    }
+                    $.each(calObj.questions, function() {
+                        if ( !isEmpty(Object.entries(json[day.format('YYYY-MM-DD')][this.variable])) )
+                            return;
+                        json[day.format('YYYY-MM-DD')][this.variable] = {};
+                        json[day.format('YYYY-MM-DD')][this.variable]['text'] = this.text;
+                        json[day.format('YYYY-MM-DD')][this.variable]['type'] = this.type;
+                        json[day.format('YYYY-MM-DD')][this.variable]['value'] = "";
+                    });
+                    json[day.format('YYYY-MM-DD')]["_complete"] = 0;
                 }
             });
         } else {
@@ -267,20 +285,17 @@ $(document).ready(function () {
                 if ( data.type == 'yesno' && !isEmpty(data.value) )
                     $(`#${calendar} .event-item[data-date=${date}] .event-item-input-yesno[value=${data.value}]`).attr('checked', 'checked')
             }); 
+            colorDayComplete(calendar, vars['_complete'], date);
         });
         
-        //Setup every Textarea to save back to JSON
+        //Setup every Textarea & yes/no to save back to JSON
         $(`#${calendar} .event-item-input-text`).on('change', function() {
-            calendarQuestions.json[varName][$(this).parent().data('date')][$(this).data('variable')]['value'] = $(this).val();
-            calendarQuestions.json[varName][$(this).parent().data('date')]['_complete'] = Object.entries(calendarQuestions.json[varName][$(this).parent().data('date')]).map(x=>x[1]['value']||true).every(x=>x) ? '1' : '0';
-            $(`textarea[name=${varName}]`).val(JSON.stringify(calendarQuestions.json[varName]));
+            jsonSaveCalendar(varName, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
+            colorDayComplete(calendar, calendarQuestions.json[varName][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
         });
-        
-        //Setup every yes/no radio button to save back to JSON
         $(`#${calendar} .event-item-input-yesno`).on('click', function() {
-            calendarQuestions.json[varName][$(this).parent().data('date')][$(this).data('variable')]['value'] = $(this).val();
-            calendarQuestions.json[varName][$(this).parent().data('date')]['_complete'] = Object.entries(calendarQuestions.json[varName][$(this).parent().data('date')]).map(x=>x[1]['value']||true).every(x=>x) ? '1' : '0';
-            $(`textarea[name=${varName}]`).val(JSON.stringify(calendarQuestions.json[varName]));
+            jsonSaveCalendar(varName, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
+            colorDayComplete(calendar, calendarQuestions.json[varName][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
         });
     });
 });
