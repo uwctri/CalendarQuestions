@@ -225,12 +225,12 @@ $(document).ready(function () {
         if ( !isEmpty(calObj.range) ) {
             $.each(calObj.range, function() {
                 for (let day of moment.range(this.start,this.end).by('days')) {
-                    if ( isEmpty(Object.entries(json[day.format('YYYY-MM-DD')])) ) {
+                    if ( json[day.format('YYYY-MM-DD')] === undefined ) {
                         json[day.format('YYYY-MM-DD')] = {};
                         json[day.format('YYYY-MM-DD')]["_complete"] = 0;
                     }
                     $.each(calObj.questions, function() {
-                        if ( !isEmpty(Object.entries(json[day.format('YYYY-MM-DD')][this.variable])) )
+                        if ( json[day.format('YYYY-MM-DD')][this.variable] !== undefined )
                             return;
                         json[day.format('YYYY-MM-DD')][this.variable] = {};
                         json[day.format('YYYY-MM-DD')][this.variable]['text'] = this.text;
