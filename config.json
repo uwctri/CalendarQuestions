@@ -27,11 +27,6 @@
                     "required": true
                 },
                 {
-                    "key": "width",
-                    "name": "<b>Form width</b><br>As percent (90%) or px (default of 800px)",
-                    "type": "text"
-                },
-                {
                     "key": "nofuture",
                     "name": "<b>Prevent Future Data Entry</b><br>Stop users from entering data on days in the future",
                     "type": "checkbox"

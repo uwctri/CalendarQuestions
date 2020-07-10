@@ -46,7 +46,7 @@ class calendarQuestions extends AbstractExternalModule {
                 $calendars[$field_name] = [
                     'calendar' => $info['element_label'],
                     'json' => $currentValue,
-                    'width' => $settings['width']['value'][$index],
+                    'noFuture' => $settings['nofuture']['value'][$index],
                     'questions' => [],
                     'range' => []
                 ];

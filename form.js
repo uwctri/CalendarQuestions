@@ -175,7 +175,6 @@ calendarQuestions.css = `
 </style>
 `;
 
-// Todo: Hide future dates
 // Todo: All None/Zero/No/Yes button(s)?
 // Todo: Tabbing between days for quick entry
 
@@ -184,8 +183,10 @@ calendarQuestions.clearCalendarData = function (calendar) {
 }
 
 function showDateQuestions(calendar, date) {
-    $('.event-item').hide();
-    $(`.event-item[data-date=${date}]`).show();
+    $(`#${calendar}Calendar .event-item`).hide();
+    if ( !calendarQuestions.config[calendar]['noFuture'] || 
+         (calendarQuestions.config[calendar]['noFuture'] && (moment().diff(date) >= 0) ) )
+        $(`#${calendar}Calendar .event-item[data-date=${date.format('YYYY-MM-DD')}]`).show();
 }
 
 function jsonSaveCalendar(calendar, date, variable, value) {
@@ -195,27 +196,29 @@ function jsonSaveCalendar(calendar, date, variable, value) {
 }
 
 function colorDayComplete(calendar, isComplete, date) {
-    $(`#${calendar} .calendar-day-${date}`).removeClass('day-complete day-incomplete');
+    $(`#${calendar}Calendar .calendar-day-${date}`).removeClass('day-complete day-incomplete');
+    if ( calendarQuestions.config[calendar]['noFuture'] && (moment().diff(moment(date,'YYYY-MM-DD')) < 0) )
+        return;
     if ( isComplete == '1' )
-        $(`#${calendar} .calendar-day-${date}`).addClass('day-complete');
+        $(`#${calendar}Calendar .calendar-day-${date}`).addClass('day-complete');
     else
-        $(`#${calendar} .calendar-day-${date}`).addClass('day-incomplete');
+        $(`#${calendar}Calendar .calendar-day-${date}`).addClass('day-incomplete');
 }
 
 $(document).ready(function () {
     calendarQuestions.json = {};
     window['moment-range'].extendMoment(moment);
     $('head').append(calendarQuestions.css);
-    $.each( calendarQuestions.config, function(varName, calObj) {
+    $.each( calendarQuestions.config, function(calName, calObj) {
         
         // Prep the area for the calendar
-        if ( $(`[name=${varName}]`).length == 0) 
+        if ( $(`[name=${calName}]`).length == 0) 
             return;
-        $(`#${varName}-tr td`).hide()
-        $(`#${varName}-tr`).append(calendarQuestions.html.row.replace('CALNAME',`${varName}Calendar`));
+        $(`#${calName}-tr td`).hide()
+        $(`#${calName}-tr`).append(calendarQuestions.html.row.replace('CALNAME',`${calName}Calendar`));
         
         // Load JSON from the text area
-        let json = $(`textarea[name=${varName}]`).val();
+        let json = $(`textarea[name=${calName}]`).val();
         if ( !isEmpty(json) )
             json = JSON.parse(json);
         else
@@ -224,6 +227,8 @@ $(document).ready(function () {
         // Build out the JSON with any new range info we might have
         if ( !isEmpty(calObj.range) ) {
             $.each(calObj.range, function() {
+                if ( !this.start || !this.end )
+                    return;
                 for (let day of moment.range(this.start,this.end).by('days')) {
                     if ( json[day.format('YYYY-MM-DD')] === undefined ) {
                         json[day.format('YYYY-MM-DD')] = {};
@@ -242,7 +247,7 @@ $(document).ready(function () {
         } else {
             //No ranges are defined. Nothing to do.
         }
-        calendarQuestions.json[varName] = json;
+        calendarQuestions.json[calName] = json;
         
         // Transform the JSON to an Event array for CLNDR
         events = [];
@@ -260,7 +265,7 @@ $(document).ready(function () {
         });
         
         // Init the CLNDR
-        let calendar = `${varName}Calendar`;
+        let calendar = `${calName}Calendar`;
         $(`#${calendar}`).clndr({
             template: calendarQuestions.html.template,
             events: events,
@@ -268,35 +273,35 @@ $(document).ready(function () {
                 click: function(target) {
                     $(`#${calendar} .today`).removeClass('today');
                     $(target.element).addClass('today');
-                    showDateQuestions(calendar, target.date.format('YYYY-MM-DD'));
+                    showDateQuestions(calName, target.date);
                 }
             },
             doneRendering: function() {
-                showDateQuestions(calendar, moment().format('YYYY-MM-DD'));
+                showDateQuestions(calName, moment());
             }
         });
         
         //Load saved values from JSON to form
         $.each( json, function(date,vars) {
-            $.each( vars, function(varName, data) {
-                if( varName[0] == "_" )
+            $.each( vars, function(calName, data) {
+                if( calName[0] == "_" )
                     return;
                 if ( data.type == 'text' )
-                    $(`#${calendar} .event-item[data-date=${date}] .event-item-input-text[data-variable=${varName}]`).val(data.value);
+                    $(`#${calendar} .event-item[data-date=${date}] .event-item-input-text[data-variable=${calName}]`).val(data.value);
                 if ( data.type == 'yesno' && !isEmpty(data.value) )
                     $(`#${calendar} .event-item[data-date=${date}] .event-item-input-yesno[value=${data.value}]`).attr('checked', 'checked')
             }); 
-            colorDayComplete(calendar, vars['_complete'], date);
+            colorDayComplete(calName, vars['_complete'], date);
         });
         
         //Setup every Textarea & yes/no to save back to JSON
         $(`#${calendar} .event-item-input-text`).on('change', function() {
-            jsonSaveCalendar(varName, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
-            colorDayComplete(calendar, calendarQuestions.json[varName][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
+            jsonSaveCalendar(calName, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
+            colorDayComplete(calName, calendarQuestions.json[calName][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
         });
         $(`#${calendar} .event-item-input-yesno`).on('click', function() {
-            jsonSaveCalendar(varName, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
-            colorDayComplete(calendar, calendarQuestions.json[varName][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
+            jsonSaveCalendar(calName, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
+            colorDayComplete(calName, calendarQuestions.json[calName][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
         });
     });
 });
