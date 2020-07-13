@@ -172,10 +172,13 @@ calendarQuestions.css = `
       font-weight: 700;
       letter-spacing: 1px;
     }
+    .clndr .markAllButton {
+      float: right;
+      margin-left: 5px;
+    }
 </style>
 `;
 
-// Todo: All None/Zero/No/Yes button(s)?
 // Todo: Tabbing between days for quick entry
 
 calendarQuestions.clearCalendarData = function (calendar) {
@@ -185,7 +188,7 @@ calendarQuestions.clearCalendarData = function (calendar) {
 function showDateQuestions(calendar, date) {
     $(`#${calendar}Calendar .event-item`).hide();
     if ( !calendarQuestions.config[calendar]['noFuture'] || 
-         (calendarQuestions.config[calendar]['noFuture'] && (moment().diff(date) >= 0) ) )
+         (calendarQuestions.config[calendar]['noFuture'] && (moment().diff(date,'days') > 0) ) )
         $(`#${calendar}Calendar .event-item[data-date=${date.format('YYYY-MM-DD')}]`).show();
 }
 
@@ -197,12 +200,38 @@ function jsonSaveCalendar(calendar, date, variable, value) {
 
 function colorDayComplete(calendar, isComplete, date) {
     $(`#${calendar}Calendar .calendar-day-${date}`).removeClass('day-complete day-incomplete');
-    if ( calendarQuestions.config[calendar]['noFuture'] && (moment().diff(moment(date,'YYYY-MM-DD')) < 0) )
+    if ( calendarQuestions.config[calendar]['noFuture'] && (moment().diff(moment(date,'YYYY-MM-DD'),'days') <= 0) )
         return;
     if ( isComplete == '1' )
         $(`#${calendar}Calendar .calendar-day-${date}`).addClass('day-complete');
     else
         $(`#${calendar}Calendar .calendar-day-${date}`).addClass('day-incomplete');
+}
+
+function calMarkAllAsValue(calendar, variable, value) {
+    if ( $(`#${calendar}Calendar [data-variable=${variable}][value=${value}]`).length )
+        $(`#${calendar}Calendar [data-variable=${variable}][value=${value}]`).filter( function() {
+            if ( moment().diff(moment($(this).parent().data('date'),'YYYY-MM-DD'),'days') > 0 && $(`#${calendar}Calendar [name=$(this).attr('name')][value!=${value}]:checked`).length == 0 ) 
+                return true;
+            return false;
+        }).attr('checked', 'checked');
+    else
+        $(`#${calendar}Calendar [data-variable=${variable}]`).filter( function() {
+            if ( moment().diff(moment($(this).parent().data('date'),'YYYY-MM-DD'),'days') > 0 && $(this).val() == "" )
+                return true;
+            return false;
+        }).val(value);
+}
+
+function insertMarkAllButton(calendar, variable, value, buttonText, tooltip) {
+    const template = `<button type="button" class="btn btn-dark btn-sm markAllButton" data-toggle="tooltip" title="TOOLTIP">TEXT</button>`;
+    $(`#${calendar}Calendar`).append(template.replace('TEXT',buttonText).replace('TOOLTIP',tooltip));
+    let target = `#${calendar}Calendar button:text(${buttonText})`;
+    $(target).tooltip();
+    $(target).on('click', function() {
+        calMarkAllAsValue(calendar, variable, value);
+    });
+    $(target).css('margin-top',$(target).parent().height()-$("#foo").height()-$(target).position().top-7);
 }
 
 $(document).ready(function () {
@@ -289,7 +318,7 @@ $(document).ready(function () {
                 if ( data.type == 'text' )
                     $(`#${calendar} .event-item[data-date=${date}] .event-item-input-text[data-variable=${calName}]`).val(data.value);
                 if ( data.type == 'yesno' && !isEmpty(data.value) )
-                    $(`#${calendar} .event-item[data-date=${date}] .event-item-input-yesno[value=${data.value}]`).attr('checked', 'checked')
+                    $(`#${calendar} .event-item[data-date=${date}] .event-item-input-yesno[value=${data.value}]`).attr('checked', 'checked');
             }); 
             colorDayComplete(calName, vars['_complete'], date);
         });
@@ -303,5 +332,11 @@ $(document).ready(function () {
             jsonSaveCalendar(calName, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
             colorDayComplete(calName, calendarQuestions.json[calName][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
         });
+        
+        //Loop to load the Mark all buttons
+        // Todo: Load the stuff from PHP first
+        // Todo: Loop throught and place buttons
+        // insertMarkAllButton(calName, variable, value, buttonText, tooltip)
+        
     });
 });

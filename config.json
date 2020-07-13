@@ -111,6 +111,34 @@
                             "type": "text"
                         }
                     ] 
+                },
+                {
+                    "key": "calendar-buttons",
+                    "name": "<b>Mark All Button(s)</b>",
+                    "type": "sub_settings",
+                    "repeatable":true,
+                    "sub_settings":[
+                        {
+                            "key": "button-text",
+                            "name": "<b>Button Text</b>",
+                            "type": "text"
+                        },
+                        {
+                            "key": "button-tooltipariable",
+                            "name": "<b>Button Tooltip</b>",
+                            "type": "text"
+                        },
+                        {
+                            "key": "button-var",
+                            "name": "<b>Variable</b>",
+                            "type": "text"
+                        },
+                        {
+                            "key": "button-val",
+                            "name": "<b>Value</b>",
+                            "type": "text"
+                        }
+                    ] 
                 }
             ]
         }
