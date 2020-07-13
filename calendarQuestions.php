@@ -6,16 +6,6 @@ use ExternalModules\ExternalModules;
 
 use REDCap;
 
-function printToScreen($string) {
-?>
-    <script type='text/javascript'>
-       $(function() {
-          console.log(<?=json_encode($string); ?>);
-       });
-    </script>
-    <?php
-}
-
 class calendarQuestions extends AbstractExternalModule {
     
     private $module_prefix = 'calendarQuestions';
@@ -47,7 +37,8 @@ class calendarQuestions extends AbstractExternalModule {
                     'json' => $currentValue,
                     'noFuture' => $settings['nofuture']['value'][$index],
                     'questions' => [],
-                    'range' => []
+                    'range' => [],
+                    'buttons' => []
                 ];
                 foreach( $settings['question']['value'][$index] as $qindex => $question ) {
                     $event = $settings['question-branch-event']['value'][$index][$qindex];
@@ -80,6 +71,19 @@ class calendarQuestions extends AbstractExternalModule {
                         'start' => $start,
                         'end' => $end
                     ]);
+                }
+                foreach( $settings['button-text']['value'][$index] as $qindex => $buttonText ) {
+                    $tooltip = $settings['button-tooltip']['value'][$index][$qindex];
+                    $var = $settings['button-var']['value'][$index][$qindex];
+                    $val = $settings['button-val']['value'][$index][$qindex];
+                    if ( !is_null($buttonText) && !is_null($var) && !is_null($val) ) {
+                        array_push( $calendars[$field_name]['buttons'], [
+                            'text' => $buttonText,
+                            'tooltip' => $tooltip,
+                            'variable' => $var,
+                            'value' => $val
+                        ]);
+                    }
                 }
             }
         }

@@ -124,7 +124,7 @@
                             "type": "text"
                         },
                         {
-                            "key": "button-tooltipariable",
+                            "key": "button-tooltip",
                             "name": "<b>Button Tooltip</b>",
                             "type": "text"
                         },

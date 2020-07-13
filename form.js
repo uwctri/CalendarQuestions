@@ -226,12 +226,15 @@ function calMarkAllAsValue(calendar, variable, value) {
 function insertMarkAllButton(calendar, variable, value, buttonText, tooltip) {
     const template = `<button type="button" class="btn btn-dark btn-sm markAllButton" data-toggle="tooltip" title="TOOLTIP">TEXT</button>`;
     $(`#${calendar}Calendar`).append(template.replace('TEXT',buttonText).replace('TOOLTIP',tooltip));
-    let target = `#${calendar}Calendar button:text(${buttonText})`;
-    $(target).tooltip();
-    $(target).on('click', function() {
+    let target = `#${calendar}Calendar button`;
+    if ( tooltip )
+        $(target).last().tooltip();
+    else
+        $(target).last().attr('title','');
+    $(target).last().on('click', function() {
         calMarkAllAsValue(calendar, variable, value);
     });
-    $(target).css('margin-top',$(target).parent().height()-$("#foo").height()-$(target).position().top-7);
+    //$(target).last().css('margin-top',$(target).last().parent().height()-$(target).last().height()-$(target).last().position().top-7);
 }
 
 $(document).ready(function () {
@@ -334,7 +337,9 @@ $(document).ready(function () {
         });
         
         //Loop to load the Mark all buttons
-        // Todo: Load the stuff from PHP first
+        $.each( calObj['buttons'], function() {
+            insertMarkAllButton(calName, this.variable, this.value, this.text, this.tooltip);
+        });
         // Todo: Loop throught and place buttons
         // insertMarkAllButton(calName, variable, value, buttonText, tooltip)
         
