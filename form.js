@@ -51,6 +51,7 @@ calendarQuestions.css = `
       -moz-box-shadow: 0px 4px 0 #343434;
       -webkit-box-shadow: 0px 4px 0 #343434;
       box-shadow: 0px 4px 0 #343434;
+      position: relative;
     }
     .clndr .clndr-controls {
       padding: 14px;
@@ -173,8 +174,13 @@ calendarQuestions.css = `
       letter-spacing: 1px;
     }
     .clndr .markAllButton {
-      float: right;
+      position: absolute;
+      top: 465px;
+      right: 0px;
       margin-left: 5px;
+    }
+    .clndr textarea {
+        height: 2em;
     }
 </style>
 `;
@@ -301,11 +307,17 @@ $(document).ready(function () {
         $(`#${calendar}`).clndr({
             template: calendarQuestions.html.template,
             events: events,
+            forceSixRows: true,
             clickEvents: {
                 click: function(target) {
                     $(`#${calendar} .today`).removeClass('today');
                     $(target.element).addClass('today');
                     showDateQuestions(calName, target.date);
+                },
+                onMonthChange: function() {
+                    $.each( json, function(date,vars) {
+                        colorDayComplete(calName, vars['_complete'], date);
+                    });
                 }
             },
             doneRendering: function() {
@@ -340,8 +352,6 @@ $(document).ready(function () {
         $.each( calObj['buttons'], function() {
             insertMarkAllButton(calName, this.variable, this.value, this.text, this.tooltip);
         });
-        // Todo: Loop throught and place buttons
-        // insertMarkAllButton(calName, variable, value, buttonText, tooltip)
         
     });
 });

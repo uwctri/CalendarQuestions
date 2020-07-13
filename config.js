@@ -25,11 +25,11 @@ $(document).ready(function() {
             $("select[name^=question-branch-event]").each( function() {
                 [trash,a,b] = $(this).prop('name').split('____');
                 $(`select[name=question-branch-variable____${a}____${b}]`).insertAfter($(`select[name=question-branch-event____${a}____${b}]`));
-                if ( $(`select[name=question-branch-event____${a}____${b}]`).next().first().get(0).outerHTML != "<br>" )
-                    $(`select[name=question-branch-event____${a}____${b}]`).after('<br>');
                 $(`input[name=question-branch-value____${a}____${b}]`).insertAfter($(`select[name=question-branch-variable____${a}____${b}]`));
-                if ( $(`select[name=question-branch-variable____${a}____${b}]`).next().first().get(0).outerHTML != "<br>" )
+                if ( $(`select[name=question-branch-event____${a}____${b}]`).parent().find('br').length  == 0 ) {
                     $(`select[name=question-branch-variable____${a}____${b}]`).after('<br>');
+                    $(`select[name=question-branch-event____${a}____${b}]`).after('<br>');
+                }
             });
             $("select[name^=question-branch-variable], select[name^=question-branch-event], input[name^=question-branch-value]").addClass('mb-2');
             $("tr[field=question-branch-variable], tr[field=question-branch-value]").hide();
@@ -38,11 +38,11 @@ $(document).ready(function() {
             $("select[name^=start-event]").each( function() {
                 [trash,a,b] = $(this).prop('name').split('____');
                 $(`select[name=start-variable____${a}____${b}]`).insertAfter($(`select[name=start-event____${a}____${b}]`));
-                if ( $(`select[name=start-event____${a}____${b}]`).next().first().get(0).outerHTML != "<br>" )
-                    $(`select[name=start-event____${a}____${b}]`).after('<br>');
                 $(`select[name=end-variable____${a}____${b}]`).insertAfter($(`select[name=end-event____${a}____${b}]`));
-                if ( $(`select[name=end-event____${a}____${b}]`).next().first().get(0).outerHTML != "<br>" )
+                if ( $(`select[name=end-event____${a}____${b}]`).parent().find('br').length  == 0 ) {
                     $(`select[name=end-event____${a}____${b}]`).after('<br>');
+                    $(`select[name=start-event____${a}____${b}]`).after('<br>');
+                }
             });
             $("select[name^=start-event], select[name^=start-variable],select[name^=end-event], select[name^=end-variable]").addClass('mb-2');
             $("tr[field=start-variable], tr[field=end-variable]").hide();
