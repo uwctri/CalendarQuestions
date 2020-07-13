@@ -18,9 +18,8 @@ function printToScreen($string) {
 
 class calendarQuestions extends AbstractExternalModule {
     
-    private $module_prefix = 'calendar_questions';
+    private $module_prefix = 'calendarQuestions';
     private $module_global = 'calendarQuestions';
-    private $module_name = 'calendarQuestions';
     
     public function __construct() {
             parent::__construct();
