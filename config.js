@@ -21,31 +21,15 @@ $(document).ready(function() {
             $(".external-modules-instance-label").remove()
             
             // Rearrange Question Branching Logic
-            let trash,a,b;
-            $("select[name^=question-branch-event]").each( function() {
-                [trash,a,b] = $(this).prop('name').split('____');
-                $(`select[name=question-branch-variable____${a}____${b}]`).insertAfter($(`select[name=question-branch-event____${a}____${b}]`));
-                $(`input[name=question-branch-value____${a}____${b}]`).insertAfter($(`select[name=question-branch-variable____${a}____${b}]`));
-                if ( $(`select[name=question-branch-event____${a}____${b}]`).parent().find('br').length  == 0 ) {
-                    $(`select[name=question-branch-variable____${a}____${b}]`).after('<br>');
-                    $(`select[name=question-branch-event____${a}____${b}]`).after('<br>');
-                }
-            });
-            $("select[name^=question-branch-variable], select[name^=question-branch-event], input[name^=question-branch-value]").addClass('mb-2');
-            $("tr[field=question-branch-variable], tr[field=question-branch-value]").hide();
+            $("tr[field=question-branch-variable] label, tr[field=question-branch-value] label").hide();
+            $("tr[field=question-branch-variable] td, tr[field=question-branch-value] td").css('border','none').css('padding-top','.15rem');
+            $("tr[field=question-branch-variable] td").css('padding-bottom','.15rem');
+            $("tr[field=question-branch-event] td").css('padding-bottom','0');
             
             // Rearrange Start/End Range
-            $("select[name^=start-event]").each( function() {
-                [trash,a,b] = $(this).prop('name').split('____');
-                $(`select[name=start-variable____${a}____${b}]`).insertAfter($(`select[name=start-event____${a}____${b}]`));
-                $(`select[name=end-variable____${a}____${b}]`).insertAfter($(`select[name=end-event____${a}____${b}]`));
-                if ( $(`select[name=end-event____${a}____${b}]`).parent().find('br').length  == 0 ) {
-                    $(`select[name=end-event____${a}____${b}]`).after('<br>');
-                    $(`select[name=start-event____${a}____${b}]`).after('<br>');
-                }
-            });
-            $("select[name^=start-event], select[name^=start-variable],select[name^=end-event], select[name^=end-variable]").addClass('mb-2');
-            $("tr[field=start-variable], tr[field=end-variable]").hide();
+            $("tr[field=start-variable] label, tr[field=end-variable] label").hide();
+            $("tr[field=start-event] td, tr[field=end-event] td").css('border-bottom','none').css('padding-bottom','.15rem');
+            $("tr[field=start-variable] td, tr[field=end-variable] td").css('border-top','none').css('padding-top','.15rem');
             
             // Default Radio Buttons to 1st choice
             $("input[name^=question-type]").each( function(index) {
