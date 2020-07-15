@@ -63,13 +63,15 @@ class calendarQuestions extends AbstractExternalModule {
                     $endOffset = $settings['end-offset']['value'][$index][$qindex];
                     $endOffset = empty($endOffset) ? '0' : $endOffset;
                     $endOffset = $endOffset[0]=='-' ? $endOffset : "+".$endOffset;
+                    $exclude = array_filter(array_map('trim', explode(',',$settings['range-exclude']['value'][$index][$qindex])));
                     if ( $endVar && $endEvent )
                         $end = end(end(end(REDCap::getData($Proj->project_id,'array',$_GET['id'],$endVar,$endEvent))));
                     else
                         $end = date('Y-m-d', strtotime($start . " " . $endOffset . " days"));
                     array_push( $calendars[$field_name]['range'], [
                         'start' => $start,
-                        'end' => $end
+                        'end' => $end,
+                        'exclude' => $exclude
                     ]);
                 }
                 foreach( $settings['button-text']['value'][$index] as $qindex => $buttonText ) {

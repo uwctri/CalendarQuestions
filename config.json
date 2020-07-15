@@ -109,7 +109,12 @@
                             "key": "end-offset",
                             "name": "<b>End Range Offset</b><br>Optional instead of end range. Positive or Negative value<br>relative to start of range",
                             "type": "text"
-                        }
+                        },
+                        {
+                            "key": "range-exclude",
+                            "name": "<b>Exclude Questions</b><br>List of variables to exlclude for this range, comma delimited",
+                            "type": "text"
+                        }                    
                     ] 
                 },
                 {

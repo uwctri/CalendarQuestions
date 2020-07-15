@@ -240,7 +240,7 @@ function insertMarkAllButton(calendar, variable, value, buttonText, tooltip) {
     $(target).last().on('click', function() {
         calMarkAllAsValue(calendar, variable, value);
     });
-    //$(target).last().css('margin-top',$(target).last().parent().height()-$(target).last().height()-$(target).last().position().top-7);
+    $(target).last().css('top',$(target).first().css('top').replace('px','')-(35*($(target).length-1)));
 }
 
 $(document).ready(function () {
@@ -264,16 +264,16 @@ $(document).ready(function () {
         
         // Build out the JSON with any new range info we might have
         if ( !isEmpty(calObj.range) ) {
-            $.each(calObj.range, function() {
-                if ( !this.start || !this.end )
+            $.each(calObj.range, function(_,rangeObj) {
+                if ( !rangeObj.start || !rangeObj.end )
                     return;
-                for (let day of moment.range(this.start,this.end).by('days')) {
+                for (let day of moment.range(rangeObj.start,rangeObj.end).by('days')) {
                     if ( json[day.format('YYYY-MM-DD')] === undefined ) {
                         json[day.format('YYYY-MM-DD')] = {};
                         json[day.format('YYYY-MM-DD')]["_complete"] = 0;
                     }
                     $.each(calObj.questions, function() {
-                        if ( json[day.format('YYYY-MM-DD')][this.variable] !== undefined )
+                        if ( json[day.format('YYYY-MM-DD')][this.variable] !== undefined || rangeObj.exclude.includes(this.variable) )
                             return;
                         json[day.format('YYYY-MM-DD')][this.variable] = {};
                         json[day.format('YYYY-MM-DD')][this.variable]['text'] = this.text;
