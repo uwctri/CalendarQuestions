@@ -32,10 +32,11 @@ $(document).ready(function() {
             $("tr[field=start-variable] td, tr[field=end-variable] td").css('border-top','none').css('padding-top','.15rem');
             
             // Default Radio Buttons to 1st choice
+            let optionNumber = $("tr[field=question-type]").first().find('input').length;
             $("input[name^=question-type]").each( function(index) {
-                if ( index % 2 != 0 )
+                if ( index % optionNumber != 0 )
                     return;
-                if ( !$(this).is(":checked") && !$(this).siblings("input").first().is(":checked") )
+                if ( !$(this).is(":checked") && !$(this).siblings("input:checked") )
                      $(this).click();
             });
             
