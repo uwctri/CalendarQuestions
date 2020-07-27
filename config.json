@@ -54,6 +54,14 @@
                                 {
                                     "value": "text",
                                     "name": "Text"
+                                },
+                                {
+                                    "value": "int",
+                                    "name": "Integer"
+                                },
+                                {
+                                    "value": "float",
+                                    "name": "Numeric"
                                 }
                             ]
                         },

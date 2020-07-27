@@ -12,7 +12,7 @@ class calendarQuestions extends AbstractExternalModule {
     private $module_global = 'calendarQuestions';
     
     public function __construct() {
-            parent::__construct();
+        parent::__construct();
     }
     
     public function redcap_every_page_top($project_id) {

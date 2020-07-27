@@ -1,3 +1,5 @@
+// Todo: Tabbing between days for quick entry
+
 calendarQuestions.html = {};
 calendarQuestions.html.row = `
 <td class="labelrc col-12" colspan="3">
@@ -30,8 +32,8 @@ calendarQuestions.html.template = `
   <% _.each(eventsThisMonth, function(event) { %>
       <div class="event-item" data-date="<%= event.date %>">
         <div class="event-item-question"><%= event.question %></div>
-        <% if(event.type == "text") { %> 
-        <textarea rows="1" class="event-item-input-text" data-variable="<%= event.variable %>"></textarea>
+        <% if( ["text","float","int"].includes(event.type) ) { %> 
+        <textarea rows="1" class="event-item-input-<%= event.type %>" data-variable="<%= event.variable %>" ></textarea>
         <% } %>
         <% if(event.type == "yesno") { %> 
         <input name="<%= event.variable %>-<%= event.date %>-radio" class="event-item-input-yesno" type="radio" data-variable="<%= event.variable %>" value="1"><span class="event-item-input-label">Yes</span>
@@ -157,6 +159,12 @@ calendarQuestions.css = `
     .clndr .event-listing .event-item-input-text {
         width: 100%;
     }
+    .clndr .event-listing .event-item-input-int {
+        width: 100%;
+    }
+    .clndr .event-listing .event-item-input-float {
+        width: 100%;
+    }
     .clndr .event-listing .event-item-input-yesno {
         margin-right: 2px;
     }
@@ -184,8 +192,6 @@ calendarQuestions.css = `
     }
 </style>
 `;
-
-// Todo: Tabbing between days for quick entry
 
 calendarQuestions.clearCalendarData = function (calendar) {
     $(`textarea[name=${calendar}]`).val('{}');
@@ -338,14 +344,26 @@ $(document).ready(function () {
             colorDayComplete(calName, vars['_complete'], date);
         });
         
-        //Setup every Textarea & yes/no to save back to JSON
-        $(`#${calendar} .event-item-input-text`).on('change', function() {
+        //Setup every save back to JSON
+        $(`#${calendar} .event-item-input-text, #${calendar} .event-item-input-float, #${calendar} .event-item-input-int`).on('change', function() {
             jsonSaveCalendar(calName, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
             colorDayComplete(calName, calendarQuestions.json[calName][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
         });
         $(`#${calendar} .event-item-input-yesno`).on('click', function() {
             jsonSaveCalendar(calName, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
             colorDayComplete(calName, calendarQuestions.json[calName][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
+        });
+        
+        //Setup validation
+        $(`#${calendar} .event-item-input-int`).on("keypress keyup blur",function (event) {
+            $(this).val($(this).val().replace(/[^\d].+/, ""));
+            if ((event.which < 48 || event.which > 57))
+                event.preventDefault();
+        });
+        $(`#${calendar} .event-item-input-float`).on("keypress keyup blur",function (event) {
+            $(this).val($(this).val().replace(/[^0-9\.]/g,''));
+            if ((event.which != 46 || $(this).val().indexOf('.') != -1) && (event.which < 48 || event.which > 57))
+                event.preventDefault();
         });
         
         //Loop to load the Mark all buttons
