@@ -195,6 +195,20 @@ calendarQuestions.clearCalendarData = function (calendar) {
     $(`textarea[name=${calendar}]`).val('{}');
 }
 
+function loadCalendarJSON(calendar) {
+    $.each( calendarQuestions.json[calendar], function(date,vars) {
+        $.each( vars, function(varName, data) {
+            if( varName[0] == "_" )
+                return;
+            if ( ['text','int','float'].includes(data.type) )
+                $(`#${calendar}Calendar .event-item[data-date=${date}] .event-item-input-${data.type}[data-variable=${varName}]`).val(data.value);
+            if ( data.type == 'yesno' && !isEmpty(data.value) )
+                $(`#${calendar}Calendar .event-item[data-date=${date}] .event-item-input-yesno[value=${data.value}]`).attr('checked', 'checked');
+        }); 
+        colorDayComplete(calendar, vars['_complete'], date);
+    });
+}
+
 function showDateQuestions(calendar, date) {
     $(`#${calendar}Calendar .event-item`).hide();
     if ( !calendarQuestions.config[calendar]['noFuture'] || 
@@ -291,7 +305,7 @@ $(document).ready(function () {
         }
         calendarQuestions.json[calName] = json;
         
-        // Transform the JSON to an Event array for CLNDR
+        // 1-time Transform the JSON to an Event array for CLNDR
         events = [];
         $.each( json, function(date,vars) {
             $.each( vars, function(varName, data) {
@@ -319,27 +333,13 @@ $(document).ready(function () {
                     showDateQuestions(calName, target.date);
                 },
                 onMonthChange: function() {
-                    $.each( json, function(date,vars) {
-                        colorDayComplete(calName, vars['_complete'], date);
-                    });
+                    loadCalendarJSON(calName);
                 }
             },
             doneRendering: function() {
                 showDateQuestions(calName, moment());
+                loadCalendarJSON(calName);
             }
-        });
-        
-        //Load saved values from JSON to form
-        $.each( json, function(date,vars) {
-            $.each( vars, function(calName, data) {
-                if( calName[0] == "_" )
-                    return;
-                if ( ['text','int','float'].includes(data.type) )
-                    $(`#${calendar} .event-item[data-date=${date}] .event-item-input-${data.type}[data-variable=${calName}]`).val(data.value);
-                if ( data.type == 'yesno' && !isEmpty(data.value) )
-                    $(`#${calendar} .event-item[data-date=${date}] .event-item-input-yesno[value=${data.value}]`).attr('checked', 'checked');
-            }); 
-            colorDayComplete(calName, vars['_complete'], date);
         });
         
         //Setup every save back to JSON
