@@ -4,8 +4,7 @@ calendarQuestions.html = {};
 calendarQuestions.html.row = `
 <td class="labelrc col-12" colspan="3">
 <div class="clndr" id="CALNAME"></div>
-</td>
-`;
+</td>`;
 
 calendarQuestions.html.template = `
 <div class="clndr-controls">
@@ -41,10 +40,9 @@ calendarQuestions.html.template = `
         <% } %>
       </div>
     <% }); %>
-</div>
-`
+</div>`;
 
-calendarQuestions.css = `
+calendarQuestions.html.css = `
 <style>
     .clndr {
       width: 100%;
@@ -252,7 +250,7 @@ function insertMarkAllButton(calendar, variable, value, buttonText, tooltip) {
 $(document).ready(function () {
     calendarQuestions.json = {};
     window['moment-range'].extendMoment(moment);
-    $('head').append(calendarQuestions.css);
+    $('head').append(calendarQuestions.html.css);
     $.each( calendarQuestions.config, function(calName, calObj) {
         
         // Prep the area for the calendar
@@ -336,8 +334,8 @@ $(document).ready(function () {
             $.each( vars, function(calName, data) {
                 if( calName[0] == "_" )
                     return;
-                if ( data.type == 'text' )
-                    $(`#${calendar} .event-item[data-date=${date}] .event-item-input-text[data-variable=${calName}]`).val(data.value);
+                if ( ['text','int','float'].includes(data.type) )
+                    $(`#${calendar} .event-item[data-date=${date}] .event-item-input-${data.type}[data-variable=${calName}]`).val(data.value);
                 if ( data.type == 'yesno' && !isEmpty(data.value) )
                     $(`#${calendar} .event-item[data-date=${date}] .event-item-input-yesno[value=${data.value}]`).attr('checked', 'checked');
             }); 
