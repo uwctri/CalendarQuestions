@@ -320,7 +320,8 @@ $(document).ready(function () {
                         json[day.format('YYYY-MM-DD')]["_complete"] = 0;
                     }
                     $.each(calObj.questions, function() {
-                        if ( unique.includes(`${day.format('YYYY-MM-DD')}${this.variable}`) || rangeObj.exclude.includes(this.variable) )
+                        if ( unique.includes(`${day.format('YYYY-MM-DD')}${this.variable}`) || 
+                             (isEmpty(json[day.format('YYYY-MM-DD')][this.variable]) && rangeObj.exclude.includes(this.variable)) )
                             return;
                         unique.push(`${day.format('YYYY-MM-DD')}${this.variable}`);
                         json[day.format('YYYY-MM-DD')][this.variable] = json[day.format('YYYY-MM-DD')][this.variable] || "";
