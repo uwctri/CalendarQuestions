@@ -324,12 +324,12 @@ $(document).ready(function () {
                             return;
                         unique.push(`${day.format('YYYY-MM-DD')}${this.variable}`);
                         json[day.format('YYYY-MM-DD')][this.variable] = json[day.format('YYYY-MM-DD')][this.variable] || "";
-                            events.push({
-                                date: day.format('YYYY-MM-DD'),
-                                question: this.text,
-                                type: this.type,
-                                variable: this.variable
-                            });
+                        events.push({
+                            date: day.format('YYYY-MM-DD'),
+                            question: this.text,
+                            type: this.type,
+                            variable: this.variable
+                        });
                     });
                 }
             });

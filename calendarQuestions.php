@@ -44,13 +44,28 @@ class calendarQuestions extends AbstractExternalModule {
                     $event = $settings['question-branch-event']['value'][$index][$qindex];
                     $var = $settings['question-branch-variable']['value'][$index][$qindex];
                     $val = $settings['question-branch-value']['value'][$index][$qindex];
-                    if ( empty($event) || empty($var) || //If Event or Var are missing or if Branching logic checks out add Question
-                         $val == end(end(end(REDCap::getData($Proj->project_id,'array',$_GET['id'],$var,$event))))) {
-                        array_push($calendars[$field_name]['questions'], [
-                            'text' => $question,
-                            'type' => $settings['question-type']['value'][$index][$qindex],
-                            'variable' => $settings['question-variable-name']['value'][$index][$qindex]
-                        ]);
+                    $branchLogicPass = false;
+                    foreach( $settings['question']['value'][$index] as $qindex => $question ) {
+                        $event = $settings['question-branch-event']['value'][$index][$qindex];
+                        $var = $settings['question-branch-variable']['value'][$index][$qindex];
+                        $val = $settings['question-branch-value']['value'][$index][$qindex];
+                        $branchLogicPass = false;
+                        if ( !empty($event) && !empty($var)  ) {
+                            $target = end(end(end(REDCap::getData($Proj->project_id,'array',$_GET['id'],$var,$event))));
+                            if ( substr($val,1,1) == "!" ) {
+                                $val = substr($val,1);
+                                $branchLogicPass = $target != $val;
+                            } else {
+                                $branchLogicPass = $target == $val;
+                            }
+                        }
+                        if ( empty($event) || empty($var) || $branchLogicPass) {
+                            array_push($calendars[$field_name]['questions'], [
+                                'text' => $question,
+                                'type' => $settings['question-type']['value'][$index][$qindex],
+                                'variable' => $settings['question-variable-name']['value'][$index][$qindex]
+                            ]);
+                        }
                     }
                 }
                 foreach( $settings['start-event']['value'][$index] as $qindex => $startEvent ) {
