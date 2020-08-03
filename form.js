@@ -308,7 +308,8 @@ $(document).ready(function () {
             json = {}; 
         
         // Build out the JSON with any new range info we might have
-        events = [];
+        let events = [];
+        let unique = [];
         if ( !isEmpty(calObj.range) ) {
             $.each(calObj.range, function(_,rangeObj) {
                 if ( !rangeObj.start || !rangeObj.end )
@@ -319,15 +320,16 @@ $(document).ready(function () {
                         json[day.format('YYYY-MM-DD')]["_complete"] = 0;
                     }
                     $.each(calObj.questions, function() {
-                        if ( rangeObj.exclude.includes(this.variable) )
+                        if ( unique.includes(`${day.format('YYYY-MM-DD')}${this.variable}`) || rangeObj.exclude.includes(this.variable) )
                             return;
+                        unique.push(`${day.format('YYYY-MM-DD')}${this.variable}`);
                         json[day.format('YYYY-MM-DD')][this.variable] = json[day.format('YYYY-MM-DD')][this.variable] || "";
-                        events.push({
-                            date: day.format('YYYY-MM-DD'),
-                            question: this.text,
-                            type: this.type,
-                            variable: this.variable
-                        });
+                            events.push({
+                                date: day.format('YYYY-MM-DD'),
+                                question: this.text,
+                                type: this.type,
+                                variable: this.variable
+                            });
                     });
                 }
             });
