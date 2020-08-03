@@ -197,13 +197,14 @@ calendarQuestions.clearCalendarData = function (calendar) {
 
 function loadCalendarJSON(calendar) {
     $.each( calendarQuestions.json[calendar], function(date,vars) {
-        $.each( vars, function(varName, data) {
+        $.each( vars, function(varName, value) {
             if( varName[0] == "_" )
                 return;
-            if ( ['text','int','float'].includes(data.type) )
-                $(`#${calendar}Calendar .event-item[data-date=${date}] .event-item-input-${data.type}[data-variable=${varName}]`).val(data.value);
-            if ( data.type == 'yesno' && !isEmpty(data.value) )
-                $(`#${calendar}Calendar .event-item[data-date=${date}] .event-item-input-yesno[value=${data.value}]`).attr('checked', 'checked');
+            if ( $(`#${calendar}Calendar .event-item[data-date=${date}] *[data-variable=${varName}]`)
+                 .is('.event-item-input-text, .event-item-input-int, .event-item-input-float') )
+                $(`#${calendar}Calendar .event-item[data-date=${date}] *[data-variable=${varName}]`).val(value);
+            else if ( !isEmpty(value) )
+                $(`#${calendar}Calendar .event-item[data-date=${date}] .event-item-input-yesno[value=${value}]`).attr('checked', 'checked');
         }); 
         colorDayComplete(calendar, vars['_complete'], date);
     });
@@ -217,8 +218,8 @@ function showDateQuestions(calendar, date) {
 }
 
 function jsonSaveCalendar(calendar, date, variable, value) {
-    calendarQuestions.json[calendar][date][variable]['value'] = value;
-    calendarQuestions.json[calendar][date]['_complete'] = Object.entries(calendarQuestions.json[calendar][date]).map(x=>x[1]['value']).filter(x => x !== undefined).every(x=>x) ? '1' : '0';
+    calendarQuestions.json[calendar][date][variable] = value;
+    calendarQuestions.json[calendar][date]['_complete'] = Object.entries(calendarQuestions.json[calendar][date]).map(x=>x[1]).filter(x => x !== undefined).every(x=>x) ? '1' : '0';
     $(`textarea[name=${calendar}]`).val(JSON.stringify(calendarQuestions.json[calendar]));
 }
 
@@ -261,6 +262,32 @@ function insertMarkAllButton(calendar, variable, value, buttonText, tooltip) {
     $(target).last().css('top',$(target).first().css('top').replace('px','')-(35*($(target).length-1)));
 }
 
+function setupCalendarSaving(calendar) {
+    //Setup every save back to JSON
+    $(`#${calendar}Calendar .event-item-input-text, #${calendar}Calendar .event-item-input-float, #${calendar}Calendar .event-item-input-int`).on('change', function() {
+        jsonSaveCalendar(calendar, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
+        colorDayComplete(calendar, calendarQuestions.json[calendar][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
+    });
+    $(`#${calendar}Calendar .event-item-input-yesno`).on('click', function() {
+        jsonSaveCalendar(calendar, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
+        colorDayComplete(calendar, calendarQuestions.json[calendar][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
+    });
+}
+
+function setupCalendarValidation(calendar) {
+    //Setup validation
+    $(`#${calendar}Calendar .event-item-input-int`).on("keypress keyup blur",function (event) {
+        $(this).val($(this).val().replace(/[^\d].+/, ""));
+        if ((event.which < 48 || event.which > 57))
+            event.preventDefault();
+    });
+    $(`#${calendar}Calendar .event-item-input-float`).on("keypress keyup blur",function (event) {
+        $(this).val($(this).val().replace(/[^0-9\.]/g,''));
+        if ((event.which != 46 || $(this).val().indexOf('.') != -1) && (event.which < 48 || event.which > 57))
+            event.preventDefault();
+    });
+}
+
 $(document).ready(function () {
     calendarQuestions.json = {};
     window['moment-range'].extendMoment(moment);
@@ -281,6 +308,7 @@ $(document).ready(function () {
             json = {}; 
         
         // Build out the JSON with any new range info we might have
+        events = [];
         if ( !isEmpty(calObj.range) ) {
             $.each(calObj.range, function(_,rangeObj) {
                 if ( !rangeObj.start || !rangeObj.end )
@@ -291,12 +319,15 @@ $(document).ready(function () {
                         json[day.format('YYYY-MM-DD')]["_complete"] = 0;
                     }
                     $.each(calObj.questions, function() {
-                        if ( json[day.format('YYYY-MM-DD')][this.variable] !== undefined || rangeObj.exclude.includes(this.variable) )
+                        if ( rangeObj.exclude.includes(this.variable) )
                             return;
-                        json[day.format('YYYY-MM-DD')][this.variable] = {};
-                        json[day.format('YYYY-MM-DD')][this.variable]['text'] = this.text;
-                        json[day.format('YYYY-MM-DD')][this.variable]['type'] = this.type;
-                        json[day.format('YYYY-MM-DD')][this.variable]['value'] = "";
+                        json[day.format('YYYY-MM-DD')][this.variable] = json[day.format('YYYY-MM-DD')][this.variable] || "";
+                        events.push({
+                            date: day.format('YYYY-MM-DD'),
+                            question: this.text,
+                            type: this.type,
+                            variable: this.variable
+                        });
                     });
                 }
             });
@@ -304,21 +335,6 @@ $(document).ready(function () {
             //No ranges are defined. Nothing to do.
         }
         calendarQuestions.json[calName] = json;
-        
-        // 1-time Transform the JSON to an Event array for CLNDR
-        events = [];
-        $.each( json, function(date,vars) {
-            $.each( vars, function(varName, data) {
-                if( varName[0] == "_" )
-                    return;
-                events.push( {
-                    date: date,
-                    question: data.text,
-                    type: data.type,
-                    variable: varName
-                });
-            }); 
-        });
         
         // Init the CLNDR
         let calendar = `${calName}Calendar`;
@@ -339,35 +355,17 @@ $(document).ready(function () {
             doneRendering: function() {
                 showDateQuestions(calName, moment());
                 loadCalendarJSON(calName);
+                setupCalendarSaving(calName);
+                setupCalendarValidation(calName);
             }
         });
         
-        //Setup every save back to JSON
-        $(`#${calendar} .event-item-input-text, #${calendar} .event-item-input-float, #${calendar} .event-item-input-int`).on('change', function() {
-            jsonSaveCalendar(calName, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
-            colorDayComplete(calName, calendarQuestions.json[calName][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
-        });
-        $(`#${calendar} .event-item-input-yesno`).on('click', function() {
-            jsonSaveCalendar(calName, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
-            colorDayComplete(calName, calendarQuestions.json[calName][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
-        });
-        
-        //Setup validation
-        $(`#${calendar} .event-item-input-int`).on("keypress keyup blur",function (event) {
-            $(this).val($(this).val().replace(/[^\d].+/, ""));
-            if ((event.which < 48 || event.which > 57))
-                event.preventDefault();
-        });
-        $(`#${calendar} .event-item-input-float`).on("keypress keyup blur",function (event) {
-            $(this).val($(this).val().replace(/[^0-9\.]/g,''));
-            if ((event.which != 46 || $(this).val().indexOf('.') != -1) && (event.which < 48 || event.which > 57))
-                event.preventDefault();
-        });
-        
         //Loop to load the Mark all buttons
-        $.each( calObj['buttons'], function() {
-            insertMarkAllButton(calName, this.variable, this.value, this.text, this.tooltip);
-        });
+        setTimeout( function() {
+            $.each( calObj['buttons'], function() {
+                insertMarkAllButton(calName, this.variable, this.value, this.text, this.tooltip);
+            })
+        }, 100);
         
     });
 });
