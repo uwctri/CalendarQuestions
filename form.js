@@ -123,7 +123,7 @@ calendarQuestions.html.css = `
       border-bottom: 3px solid #3883a3;
     }
     .clndr .clndr-grid .days .day.event.day-complete .day-number{
-        border-bottom: 3px solid green !important;
+        border-bottom: 3px solid #52CC00 !important;
     }
     .clndr .clndr-grid .days .day.event.day-incomplete .day-number{
         border-bottom: 3px solid red !important;
@@ -204,7 +204,7 @@ function loadCalendarJSON(calendar) {
                  .is('.event-item-input-text, .event-item-input-int, .event-item-input-float') )
                 $(`#${calendar}Calendar .event-item[data-date=${date}] *[data-variable=${varName}]`).val(value);
             else if ( !isEmpty(value) )
-                $(`#${calendar}Calendar .event-item[data-date=${date}] .event-item-input-yesno[value=${value}]`).attr('checked', 'checked');
+                $(`#${calendar}Calendar .event-item[data-date=${date}] .event-item-input-yesno[value=${value}]`).attr('checked', true);
         }); 
         colorDayComplete(calendar, vars['_complete'], date);
     });
@@ -236,16 +236,12 @@ function colorDayComplete(calendar, isComplete, date) {
 function calMarkAllAsValue(calendar, variable, value) {
     if ( $(`#${calendar}Calendar [data-variable=${variable}][value=${value}]`).length )
         $(`#${calendar}Calendar [data-variable=${variable}][value=${value}]`).filter( function() {
-            if ( moment().diff(moment($(this).parent().data('date'),'YYYY-MM-DD'),'days') > 0 && $(`#${calendar}Calendar [name=$(this).attr('name')][value!=${value}]:checked`).length == 0 ) 
-                return true;
-            return false;
-        }).attr('checked', 'checked');
+            return ( moment().diff(moment($(this).parent().data('date'),'YYYY-MM-DD'),'days') > 0 && $(`#${calendar}Calendar [name=$(this).attr('name')][value!=${value}]:checked`).length == 0 ) 
+        }).attr('checked', true).click();
     else
         $(`#${calendar}Calendar [data-variable=${variable}]`).filter( function() {
-            if ( moment().diff(moment($(this).parent().data('date'),'YYYY-MM-DD'),'days') > 0 && $(this).val() == "" )
-                return true;
-            return false;
-        }).val(value);
+            return ( moment().diff(moment($(this).parent().data('date'),'YYYY-MM-DD'),'days') > 0 && $(this).val() == "" )
+        }).val(value).change();
 }
 
 function insertMarkAllButton(calendar, variable, value, buttonText, tooltip) {
@@ -259,7 +255,13 @@ function insertMarkAllButton(calendar, variable, value, buttonText, tooltip) {
     $(target).last().on('click', function() {
         calMarkAllAsValue(calendar, variable, value);
     });
-    $(target).last().css('top',$(target).first().css('top').replace('px','')-(35*($(target).length-1)));
+    adjustCSS();
+    
+    function adjustCSS() {
+        if ( $(target).first().css('top') )
+            $(target).last().css('top',$(target).first().css('top').replace('px','')-(35*($(target).length-1)));
+        setTimeout(adjustCSS, 250);
+    }
 }
 
 function setupCalendarSaving(calendar) {
