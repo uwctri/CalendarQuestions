@@ -317,18 +317,20 @@ $(document).ready(function () {
                 if ( !rangeObj.start || !rangeObj.end )
                     return;
                 for (let day of moment.range(rangeObj.start,rangeObj.end).by('days')) {
-                    if ( json[day.format('YYYY-MM-DD')] === undefined ) {
-                        json[day.format('YYYY-MM-DD')] = {};
-                        json[day.format('YYYY-MM-DD')]["_complete"] = 0;
+                    let dayYMD = day.format('YYYY-MM-DD');
+                    if ( json[dayYMD] === undefined ) {
+                        json[dayYMD] = {};
+                        json[dayYMD]["_complete"] = 0;
                     }
                     $.each(calObj.questions, function() {
-                        if ( unique.includes(`${day.format('YYYY-MM-DD')}${this.variable}`) || 
-                             (isEmpty(json[day.format('YYYY-MM-DD')][this.variable]) && rangeObj.exclude.includes(this.variable)) )
+                        if ( unique.includes(`${dayYMD}${this.variable}`) || 
+                             (isEmpty(json[dayYMD][this.variable]) && rangeObj.exclude.includes(this.variable)) )
                             return;
-                        unique.push(`${day.format('YYYY-MM-DD')}${this.variable}`);
-                        json[day.format('YYYY-MM-DD')][this.variable] = json[day.format('YYYY-MM-DD')][this.variable] || "";
+                        unique.push(`${dayYMD}${this.variable}`);
+                        json[dayYMD][this.variable] = json[dayYMD][this.variable] || "";
                         events.push({
-                            date: day.format('YYYY-MM-DD'),
+                            index: this.index,
+                            date: dayYMD,
                             question: this.text,
                             type: this.type,
                             variable: this.variable
@@ -339,6 +341,7 @@ $(document).ready(function () {
         } else {
             //No ranges are defined. Nothing to do.
         }
+        events.sort((a,b) => ( b.index < a.index ) ? 1 : -1); // Sort by question index for consistent display
         calendarQuestions.json[calName] = json;
         
         // Init the CLNDR

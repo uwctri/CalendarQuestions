@@ -56,6 +56,7 @@ class calendarQuestions extends AbstractExternalModule {
                     }
                     if ( empty($event) || empty($var) || $branchLogicPass) {
                         array_push($calendars[$field_name]['questions'], [
+                            'index' => $qindex,
                             'text' => $question,
                             'type' => $settings['question-type']['value'][$index][$qindex],
                             'variable' => $settings['question-variable-name']['value'][$index][$qindex]
