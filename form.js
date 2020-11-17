@@ -312,6 +312,7 @@ $(document).ready(function () {
         // Build out the JSON with any new range info we might have
         let events = [];
         let unique = [];
+        let blanks = [];
         if ( !isEmpty(calObj.range) ) {
             $.each(calObj.range, function(_,rangeObj) {
                 if ( !rangeObj.start || !rangeObj.end )
@@ -323,10 +324,12 @@ $(document).ready(function () {
                         json[dayYMD]["_complete"] = 0;
                     }
                     $.each(calObj.questions, function() {
-                        if ( unique.includes(`${dayYMD}${this.variable}`) || 
+                        if ( json[dayYMD][this.variable] == "" ) 
+                            blanks.push(`${dayYMD}_${this.variable}`);
+                        if ( unique.includes(`${dayYMD}_${this.variable}`) || 
                              (isEmpty(json[dayYMD][this.variable]) && rangeObj.exclude.includes(this.variable)) )
                             return;
-                        unique.push(`${dayYMD}${this.variable}`);
+                        unique.push(`${dayYMD}_${this.variable}`);
                         json[dayYMD][this.variable] = json[dayYMD][this.variable] || "";
                         events.push({
                             index: this.index,
@@ -341,6 +344,14 @@ $(document).ready(function () {
         } else {
             //No ranges are defined. Nothing to do.
         }
+        
+        // Check if some values were in range at one point but no longer are. Remove them.
+        $.each( blanks.filter(x => !unique.includes(x)), function() {
+            let date = this.split('_')[0];
+            let name = this.split('_').slice(1).join('_');
+            delete json[date][name];
+        });
+        
         events.sort((a,b) => ( b.index < a.index ) ? 1 : -1); // Sort by question index for consistent display
         calendarQuestions.json[calName] = json;
         
