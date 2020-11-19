@@ -1,5 +1,3 @@
-// Todo: Tabbing between days for quick entry
-
 calendarQuestions.html = {};
 calendarQuestions.html.row = `
 <td class="labelrc col-12" colspan="3">
@@ -291,6 +289,33 @@ function setupCalendarValidation(calendar) {
 }
 
 $(document).ready(function () {
+    
+    // Attach event listener for moving around the calendar with keys
+    document.onkeydown = function(e) {
+        let YM = $("div.today").attr('class').split('calendar-day-')[1].split(' ')[0].slice(0,-2);
+        let day = Number($("div.today .day-number").text());
+        switch(event.key) {
+            case "ArrowLeft":
+                day = day - 1;
+            break;
+            case "ArrowUp":
+                day = day - 7;
+            break;
+            case "ArrowRight":
+                day = day + 1;
+            break;
+            case "ArrowDown":
+                day = day + 7;
+            break;
+            default: return; // exit this handler for other keys
+        }
+        if ( $(`.calendar-day-${YM+LZ(day)}`).length ) {
+            $("div.today").removeClass('today');
+            $(`.calendar-day-${YM+LZ(day)}`).addClass('today');
+            e.preventDefault(); // prevent the default action (scroll / move caret)
+        }
+    };
+    
     calendarQuestions.json = {};
     window['moment-range'].extendMoment(moment);
     $('head').append(calendarQuestions.html.css);
