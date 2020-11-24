@@ -27,12 +27,14 @@ class calendarQuestions extends AbstractExternalModule {
         global $Proj;
         $calNames = $this->getProjectSetting('name');
         $settings = $this->getProjectSettings();
-        foreach ($Proj->metadata as $field_name => $info) {
+        $fields = REDCap::getFieldNames($instrument);
+        foreach ($fields as $field) {
+            $info = $Proj->metadata[$field];
             $index = array_search($info['element_label'], $calNames);
             if ( $index !== False && $info['element_type'] == 'textarea') {
-                $currentValue = REDCap::getData($Proj->project_id,'array',$_GET['id'],$field_name,$_GET['event_id']);
+                $currentValue = REDCap::getData($Proj->project_id,'array',$_GET['id'],$field,$_GET['event_id']);
                 $currentValue = empty($currentValue) ? "{}" : end(end(end($currentValue)));
-                $calendars[$field_name] = [
+                $calendars[$field] = [
                     'calendar' => $info['element_label'],
                     'json' => $currentValue,
                     'noFuture' => $settings['nofuture']['value'][$index],
@@ -55,7 +57,7 @@ class calendarQuestions extends AbstractExternalModule {
                         }
                     }
                     if ( empty($event) || empty($var) || $branchLogicPass) {
-                        array_push($calendars[$field_name]['questions'], [
+                        array_push($calendars[$field]['questions'], [
                             'index' => $qindex,
                             'text' => $question,
                             'type' => $settings['question-type']['value'][$index][$qindex],
@@ -78,7 +80,7 @@ class calendarQuestions extends AbstractExternalModule {
                         $end = end(end(end(REDCap::getData($Proj->project_id,'array',$_GET['id'],$endVar,$endEvent))));
                     else
                         $end = date('Y-m-d', strtotime($start . " " . $endOffset . " days"));
-                    array_push( $calendars[$field_name]['range'], [
+                    array_push( $calendars[$field]['range'], [
                         'start' => $start,
                         'end' => $end,
                         'exclude' => $exclude
@@ -89,7 +91,7 @@ class calendarQuestions extends AbstractExternalModule {
                     $var = $settings['button-var']['value'][$index][$qindex];
                     $val = $settings['button-val']['value'][$index][$qindex];
                     if ( !is_null($buttonText) && !is_null($var) && !is_null($val) ) {
-                        array_push( $calendars[$field_name]['buttons'], [
+                        array_push( $calendars[$field]['buttons'], [
                             'text' => $buttonText,
                             'tooltip' => $tooltip,
                             'variable' => $var,
