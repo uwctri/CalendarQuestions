@@ -25,6 +25,8 @@ $(document).ready(function() {
             $("tr[field=question-branch-variable] td, tr[field=question-branch-value] td").css('border','none').css('padding-top','.15rem');
             $("tr[field=question-branch-variable] td").css('padding-bottom','.15rem');
             $("tr[field=question-branch-event] td").css('padding-bottom','0');
+            $("tr[field=question-branch-value] .external-modules-input-td").prepend('= ');
+            $("tr[field=question-branch-value] .external-modules-input-td input").css('width','96%');
             
             // Rearrange Start/End Range
             $("tr[field=start-variable] label, tr[field=end-variable] label").hide();
@@ -50,7 +52,5 @@ $(document).ready(function() {
 
         if (typeof ExternalModules.Settings.prototype.resetConfigInstancesOld !== 'undefined')
             ExternalModules.Settings.prototype.resetConfigInstances = ExternalModules.Settings.prototype.resetConfigInstancesOld;
-
-        $modal.removeClass('defaultFormStatusConfig');
     });
 });

@@ -1,4 +1,5 @@
 calendarQuestions.html = {};
+calendarQuestions.fn = {};
 calendarQuestions.html.row = `
 <td class="labelrc col-12" colspan="3">
 <div class="clndr" id="CALNAME"></div>
@@ -189,11 +190,11 @@ calendarQuestions.html.css = `
 </style>
 `;
 
-calendarQuestions.clearCalendarData = function (calendar) {
+calendarQuestions.fn.clearCalendarData = function(calendar) {
     $(`textarea[name=${calendar}]`).val('{}');
 }
 
-function loadCalendarJSON(calendar) {
+calendarQuestions.fn.loadCalendarJSON = function(calendar) {
     $.each( calendarQuestions.json[calendar], function(date,vars) {
         $.each( vars, function(varName, value) {
             if( varName[0] == "_" )
@@ -204,24 +205,24 @@ function loadCalendarJSON(calendar) {
             else if ( !isEmpty(value) )
                 $(`#${calendar}Calendar .event-item[data-date=${date}] .event-item-input-yesno[value=${value}]`).attr('checked', true);
         }); 
-        colorDayComplete(calendar, vars['_complete'], date);
+        calendarQuestions.fn.colorDayComplete(calendar, vars['_complete'], date);
     });
 }
 
-function showDateQuestions(calendar, date) {
+calendarQuestions.fn.showDateQuestions = function(calendar, date) {
     $(`#${calendar}Calendar .event-item`).hide();
     if ( !calendarQuestions.config[calendar]['noFuture'] || 
          (calendarQuestions.config[calendar]['noFuture'] && (moment().diff(date,'days') > 0) ) )
         $(`#${calendar}Calendar .event-item[data-date=${date.format('YYYY-MM-DD')}]`).show();
 }
 
-function jsonSaveCalendar(calendar, date, variable, value) {
+calendarQuestions.fn.jsonSaveCalendar = function(calendar, date, variable, value) {
     calendarQuestions.json[calendar][date][variable] = value;
     calendarQuestions.json[calendar][date]['_complete'] = Object.entries(calendarQuestions.json[calendar][date]).map(x=>x[1]).filter(x => x !== undefined).every(x=>x) ? '1' : '0';
     $(`textarea[name=${calendar}]`).val(JSON.stringify(calendarQuestions.json[calendar]));
 }
 
-function colorDayComplete(calendar, isComplete, date) {
+calendarQuestions.fn.colorDayComplete = function(calendar, isComplete, date) {
     $(`#${calendar}Calendar .calendar-day-${date}`).removeClass('day-complete day-incomplete');
     if ( calendarQuestions.config[calendar]['noFuture'] && (moment().diff(moment(date,'YYYY-MM-DD'),'days') <= 0) )
         return;
@@ -231,7 +232,7 @@ function colorDayComplete(calendar, isComplete, date) {
         $(`#${calendar}Calendar .calendar-day-${date}`).addClass('day-incomplete');
 }
 
-function calMarkAllAsValue(calendar, variable, value) {
+calendarQuestions.fn.calMarkAllAsValue = function(calendar, variable, value) {
     if ( $(`#${calendar}Calendar [data-variable=${variable}][value=${value}]`).length )
         $(`#${calendar}Calendar [data-variable=${variable}][value=${value}]`).filter( function() {
             return ( moment().diff(moment($(this).parent().data('date'),'YYYY-MM-DD'),'days') > 0 && $(`#${calendar}Calendar [name=$(this).attr('name')][value!=${value}]:checked`).length == 0 ) 
@@ -242,7 +243,7 @@ function calMarkAllAsValue(calendar, variable, value) {
         }).val(value).change();
 }
 
-function insertMarkAllButton(calendar, variable, value, buttonText, tooltip) {
+calendarQuestions.fn.insertMarkAllButton = function(calendar, variable, value, buttonText, tooltip) {
     const template = `<button type="button" class="btn btn-dark btn-sm markAllButton" data-toggle="tooltip" title="TOOLTIP">TEXT</button>`;
     $(`#${calendar}Calendar`).append(template.replace('TEXT',buttonText).replace('TOOLTIP',tooltip));
     let target = `#${calendar}Calendar button`;
@@ -251,7 +252,7 @@ function insertMarkAllButton(calendar, variable, value, buttonText, tooltip) {
     else
         $(target).last().attr('title','');
     $(target).last().on('click', function() {
-        calMarkAllAsValue(calendar, variable, value);
+        calendarQuestions.fn.calMarkAllAsValue(calendar, variable, value);
     });
     adjustCSS();
     
@@ -262,19 +263,19 @@ function insertMarkAllButton(calendar, variable, value, buttonText, tooltip) {
     }
 }
 
-function setupCalendarSaving(calendar) {
+calendarQuestions.fn.setupCalendarSaving = function(calendar) {
     //Setup every save back to JSON
     $(`#${calendar}Calendar .event-item-input-text, #${calendar}Calendar .event-item-input-float, #${calendar}Calendar .event-item-input-int`).on('change', function() {
-        jsonSaveCalendar(calendar, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
-        colorDayComplete(calendar, calendarQuestions.json[calendar][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
+        calendarQuestions.fn.jsonSaveCalendar(calendar, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
+        calendarQuestions.fn.colorDayComplete(calendar, calendarQuestions.json[calendar][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
     });
     $(`#${calendar}Calendar .event-item-input-yesno`).on('click', function() {
-        jsonSaveCalendar(calendar, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
-        colorDayComplete(calendar, calendarQuestions.json[calendar][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
+        calendarQuestions.fn.jsonSaveCalendar(calendar, $(this).parent().data('date'), $(this).data('variable'), $(this).val());
+        calendarQuestions.fn.colorDayComplete(calendar, calendarQuestions.json[calendar][$(this).parent().data('date')]['_complete'], $(this).parent().data('date'));
     });
 }
 
-function setupCalendarValidation(calendar) {
+calendarQuestions.fn.setupCalendarValidation = function(calendar) {
     //Setup validation
     $(`#${calendar}Calendar .event-item-input-int`).on("keypress keyup blur",function (event) {
         $(this).val($(this).val().replace(/[^\d].+/, ""));
@@ -310,8 +311,7 @@ $(document).ready(function () {
             default: return; // exit this handler for other keys
         }
         if ( $(`.calendar-day-${YM+LZ(day)}`).length ) {
-            $("div.today").removeClass('today');
-            $(`.calendar-day-${YM+LZ(day)}`).addClass('today');
+            $(`.calendar-day-${YM+LZ(day)}`).click();
             e.preventDefault(); // prevent the default action (scroll / move caret)
         }
     };
@@ -390,24 +390,24 @@ $(document).ready(function () {
                 click: function(target) {
                     $(`#${calendar} .today`).removeClass('today');
                     $(target.element).addClass('today');
-                    showDateQuestions(calName, target.date);
+                    calendarQuestions.fn.showDateQuestions(calName, target.date);
                 },
                 onMonthChange: function() {
-                    loadCalendarJSON(calName);
+                    calendarQuestions.fn.loadCalendarJSON(calName);
                 }
             },
             doneRendering: function() {
-                showDateQuestions(calName, moment());
-                loadCalendarJSON(calName);
-                setupCalendarSaving(calName);
-                setupCalendarValidation(calName);
+                calendarQuestions.fn.showDateQuestions(calName, moment());
+                calendarQuestions.fn.loadCalendarJSON(calName);
+                calendarQuestions.fn.setupCalendarSaving(calName);
+                calendarQuestions.fn.setupCalendarValidation(calName);
             }
         });
         
         //Loop to load the Mark all buttons
         setTimeout( function() {
             $.each( calObj['buttons'], function() {
-                insertMarkAllButton(calName, this.variable, this.value, this.text, this.tooltip);
+                calendarQuestions.fn.insertMarkAllButton(calName, this.variable, this.value, this.text, this.tooltip);
             })
         }, 100);
         
