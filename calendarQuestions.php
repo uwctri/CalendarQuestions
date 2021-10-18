@@ -6,11 +6,7 @@ use ExternalModules\ExternalModules;
 use REDCap;
 
 class calendarQuestions extends AbstractExternalModule {
-    
-    private $module_prefix = 'calendarQuestions';
     private $module_global = 'calendarQuestions';
-    
-    
     
     public function redcap_every_page_top($project_id) {
         $this->initGlobal();
@@ -114,7 +110,7 @@ class calendarQuestions extends AbstractExternalModule {
     
     private function initGlobal() {
         $data = array(
-            "modulePrefix" => $this->module_prefix,
+            "modulePrefix" => $this->PREFIX,
         );
         echo "<script>var ".$this->module_global." = ".json_encode($data).";</script>";
     }
