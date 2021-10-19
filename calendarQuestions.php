@@ -11,7 +11,7 @@ class calendarQuestions extends AbstractExternalModule {
     public function redcap_every_page_top($project_id) {
         $this->initGlobal();
         // Custom Config page
-        if (strpos(PAGE, 'ExternalModules/manager/project.php') !== false && $project_id != NULL) {
+        if (strpos(PAGE, 'manager/project.php') !== false && $project_id != NULL) {
             $this->includeJs('config.js');
         }
     }
