@@ -14,4 +14,6 @@ Configuration consists of defining questions, their types, and text (straight fo
 
 ## Call Outs
 
-* The code base has not had extensive review and needs to be refactored
+* The JS code base is pretty messy and needs to be refactored
+
+* We rely on 4 external libraries (CLNDR, Moment, Moment-Range, and LoDash)
