@@ -13,6 +13,7 @@
         "redcap_data_entry_form",
         "redcap_every_page_top"
     ],
+    "framework-version": 8,
     "project-settings": [
         {
             "key": "calendar-config",
@@ -50,6 +51,10 @@
                                 {
                                     "value": "yesno",
                                     "name": "Yes/No"
+                                },
+                                {
+                                    "value": "check",
+                                    "name": "Check Box"
                                 },
                                 {
                                     "value": "text",
@@ -95,7 +100,7 @@
                     "sub_settings":[
                         {
                             "key": "start-event",
-                            "name": "<b>Start Range</b>",
+                            "name": "<b>Start Range</b><br>Date field",
                             "type": "event-list"
                         },
                         {
@@ -105,7 +110,7 @@
                         },
                         {
                             "key": "end-event",
-                            "name": "<b>End Range</b>",
+                            "name": "<b>End Range</b><br>Date field",
                             "type": "event-list"
                         },
                         {
@@ -114,8 +119,13 @@
                             "type": "field-list"
                         },
                         {
+                            "key": "start-offset",
+                            "name": "<b>Start Range Offset</b><br>Optional, add or subtract N days from the start date",
+                            "type": "text"
+                        },
+                        {
                             "key": "end-offset",
-                            "name": "<b>End Range (Offset)</b><br>Optional, replaces end range. Positive or Negative value<br>relative to start of range",
+                            "name": "<b>End Range Offset</b><br>Optional, add or subtract N days from the end date",
                             "type": "text"
                         },
                         {
