@@ -8,18 +8,18 @@ calQ.clearCalendarData = function(calendar) {
 
 calQ.loadCalendarJSON = function(calendar, month) {
     
-    let $cal = $(`#${calendar}Calendar`);
+    const $cal = $(`#${calendar}Calendar`);
     
     // Loop over data for the month
     $.each( calQ.json[calendar], function(date,vars) {
         $.each( vars, function(varName, value) {
             
             // Skip days outside the month
-            if( varName[0] == "_" || (moment(date).format("MM") != month.format("MM")) )
+            if( varName[0] == "_" || (moment(date).format("MM") != month) )
                 return;
             
             $el = $cal.find(`.event-item[data-date=${date}] *[data-variable=${varName}]`);
-            let type = calQ.config[calendar].questions[varName].type;
+            const type = calQ.config[calendar].questions[varName].type;
             
             // Enter data based on the format
             if ( ["text","int","float"].includes(type) ) {
@@ -28,7 +28,7 @@ calQ.loadCalendarJSON = function(calendar, month) {
             else if ( !isEmpty(value) && type == "yesno" ) {
                 $el.find(`[value=${value}]`).attr('checked', true);
             }
-            else if ( !isEmpty(value) && value == '1' ) {
+            else if ( !isEmpty(value) && value == '1' && type == "check" ) {
                 $el.attr('checked', true);
             }
         }); 
@@ -39,7 +39,7 @@ calQ.loadCalendarJSON = function(calendar, month) {
 }
 
 calQ.showDateQuestions = function(calendar, date) {
-    $cal = $(`#${calendar}Calendar`);
+    const $cal = $(`#${calendar}Calendar`);
     $cal.find(`.event-item`).hide();
     if ( !calQ.config[calendar]['noFuture'] || (moment().diff(date,'days') > 0) ) {
         $cal.find(`.event-item[data-date=${date.format('YYYY-MM-DD')}]`).show();
@@ -77,7 +77,7 @@ calQ.updateDayComplete = function(calendar, date) {
 }
 
 calQ.colorDayComplete = function(calendar, isComplete, date) {
-    $cal = $(`#${calendar}Calendar`);
+    const $cal = $(`#${calendar}Calendar`);
     $cal.find(`.calendar-day-${date}`).removeClass('day-complete day-incomplete');
     if ( calQ.config[calendar]['noFuture'] && (moment().diff(moment(date,'YYYY-MM-DD'),'days') <= 0) )
         return;
@@ -85,19 +85,19 @@ calQ.colorDayComplete = function(calendar, isComplete, date) {
 }
 
 calQ.calMarkAllAsValue = function(calendar, variable, value) {
-    $cal = $(`#${calendar}Calendar`);
-    if ( $cal.find(`[data-variable=${variable}][value=${value}]`).length )
-        $cal.find(`[data-variable=${variable}][value=${value}]`).filter( function() {
-            return ( moment().diff(moment($(this).parent().data('date'),'YYYY-MM-DD'),'days') > 0 && $cal.find(`[name=${$(this).attr('name')}][value!=${value}]:checked`).length == 0 ) 
-        }).attr('checked', true).click();
-    else if ( $cal.find(`[data-variable=${variable}][type=checkbox]`).length ) {
-        let f = value ? ':not(:checked)' : ':checked';
-        $cal.find(`[data-variable=${variable}][type=checkbox]${f}`).click();
-    }
-    else
-        $cal.find(`[data-variable=${variable}]`).filter( function() {
-            return ( moment().diff(moment($(this).parent().data('date'),'YYYY-MM-DD'),'days') > 0 && $(this).val() == "" )
-        }).val(value).change();
+    
+    const $cal = $(`#${calendar}Calendar`);
+    const type = calQ.config[calendar].questions[variable].type;
+    const month = $(".clndr-grid .today").children().data('date').split('-')[1];
+    
+    $.each( calQ.json[calendar], function(date, data) {
+        if ( date.split('-')[1] != month || data['_complete'] == 1 )
+            return;
+        calQ.json[calendar][date][variable] = value;
+    });
+    
+    $(`textarea[name=${calendar}]`).val(JSON.stringify(calQ.json[calendar]));
+    calQ.loadCalendarJSON(calendar, month);
 }
 
 calQ.insertMarkAllButton = function(calendar, settings) {
@@ -122,7 +122,7 @@ calQ.insertMarkAllButton = function(calendar, settings) {
 }
 
 calQ.updateMarkAllButtons = function(calendar) {
-    $cal = $(`#${calendar}Calendar`);
+    const $cal = $(`#${calendar}Calendar`);
     $cal.parent().find("button.markAllButton").show();
     $.each( calQ.config[calendar].buttons, function() {
         if ( !$cal.find(`[data-variable=${this.variable}]:visible`).length )
@@ -131,7 +131,7 @@ calQ.updateMarkAllButtons = function(calendar) {
 }
 
 calQ.setupSaving = function(calendar) {
-    $cal = $(`#${calendar}Calendar`);
+    const $cal = $(`#${calendar}Calendar`);
     //Setup every save back to JSON
     $cal.find("[class^=event-item-input-]").on('click change', function() {
         let newVal = $(this).prop('type') == "checkbox" ? ($(this).is(':checked') ? '1' : '0') : $(this).val();
@@ -140,7 +140,7 @@ calQ.setupSaving = function(calendar) {
 }
 
 calQ.setupValidation = function(calendar) {
-    $cal = $(`#${calendar}Calendar`);
+    const $cal = $(`#${calendar}Calendar`);
     
     //Setup validation
     $cal.find(`.event-item-input-int`).on("keypress keyup blur",function (event) {
@@ -202,7 +202,6 @@ $(document).ready(function () {
         
         let events = [];
         let unique = [];
-        let blanks = [];
         
         // Build out the JSON with any new range info we might have
         $.each(calSettings.range, function(_,rangeObj) {
@@ -214,7 +213,7 @@ $(document).ready(function () {
             // Loop over every day in the range
             for (let day of moment.range(rangeObj.start,rangeObj.end).by('days')) {
                 
-                let date = day.format('YYYY-MM-DD');
+                const date = day.format('YYYY-MM-DD');
                 
                 // Init Json structure
                 if ( json[date] === undefined ) {
@@ -264,12 +263,12 @@ $(document).ready(function () {
                     calQ.showDateQuestions(calName, target.date);
                 },
                 onMonthChange: function(month) {
-                    calQ.loadCalendarJSON(calName, month);
+                    calQ.loadCalendarJSON(calName, month.format("MM"));
                 }
             },
             doneRendering: function() {
                 calQ.showDateQuestions(calName, moment());
-                calQ.loadCalendarJSON(calName, moment());
+                calQ.loadCalendarJSON(calName, moment().format("MM"));
                 calQ.setupSaving(calName);
                 calQ.setupValidation(calName);
             }
