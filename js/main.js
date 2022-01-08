@@ -1,13 +1,12 @@
-calQ.fn = {};
 calQ.json = {};
 calQ.wrap = '<td class="labelrc col-12" colspan="3"><div class="clndr" id="CALNAME"></div></td>';
 calQ.btn = '<button type="button" class="btn btn-dark btn-sm markAllButton" data-toggle="tooltip" title="TOOLTIP">TEXT</button>';
 
-calQ.fn.clearCalendarData = function(calendar) {
+calQ.clearCalendarData = function(calendar) {
     $(`textarea[name=${calendar}]`).val('{}');
 }
 
-calQ.fn.loadCalendarJSON = function(calendar, month) {
+calQ.loadCalendarJSON = function(calendar, month) {
     
     let $cal = $(`#${calendar}Calendar`);
     
@@ -34,27 +33,27 @@ calQ.fn.loadCalendarJSON = function(calendar, month) {
             }
         }); 
         
-        calQ.fn.colorDayComplete(calendar, vars['_complete'], date);
+        calQ.colorDayComplete(calendar, vars['_complete'], date);
         
     });
 }
 
-calQ.fn.showDateQuestions = function(calendar, date) {
+calQ.showDateQuestions = function(calendar, date) {
     $cal = $(`#${calendar}Calendar`);
     $cal.find(`.event-item`).hide();
     if ( !calQ.config[calendar]['noFuture'] || (moment().diff(date,'days') > 0) ) {
         $cal.find(`.event-item[data-date=${date.format('YYYY-MM-DD')}]`).show();
     }
-    calQ.fn.updateMarkAllButtons(calendar);
+    calQ.updateMarkAllButtons(calendar);
 }
 
-calQ.fn.jsonSaveCalendar = function(calendar, date, variable, value) {
+calQ.jsonSaveCalendar = function(calendar, date, variable, value) {
     calQ.json[calendar][date][variable] = value;
-    calQ.fn.updateDayComplete(calendar, date, variable);
+    calQ.updateDayComplete(calendar, date, variable);
     $(`textarea[name=${calendar}]`).val(JSON.stringify(calQ.json[calendar]));
 }
 
-calQ.fn.updateDayComplete = function(calendar, date) {
+calQ.updateDayComplete = function(calendar, date) {
     
     const updateColor = !!!date;
     date = date || $(".clndr-grid .today").children().data('date');
@@ -62,30 +61,30 @@ calQ.fn.updateDayComplete = function(calendar, date) {
     if ( !calQ.json[calendar][date] )
         return;
     
-    calQ.json[calendar][date]['_complete'] = '1';
+    calQ.json[calendar][date]['_complete'] = 1;
     $.each( calQ.json[calendar][date], function(varName, value) {
         if ( value !== undefined && varName != "_complete" &&
              calQ.config[calendar].questions[varName].type != 'check' &&
              value.toString() == "" ) {
-            calQ.json[calendar][date]['_complete'] = '0';
+            calQ.json[calendar][date]['_complete'] = 0;
             return false;
         }
     });
     
     if ( updateColor ) {
-        calQ.fn.colorDayComplete(calendar, calQ.json[calendar][date]['_complete'], date);
+        calQ.colorDayComplete(calendar, calQ.json[calendar][date]['_complete'], date);
     }
 }
 
-calQ.fn.colorDayComplete = function(calendar, isComplete, date) {
+calQ.colorDayComplete = function(calendar, isComplete, date) {
     $cal = $(`#${calendar}Calendar`);
     $cal.find(`.calendar-day-${date}`).removeClass('day-complete day-incomplete');
     if ( calQ.config[calendar]['noFuture'] && (moment().diff(moment(date,'YYYY-MM-DD'),'days') <= 0) )
         return;
-    $cal.find(`.calendar-day-${date}`).addClass(isComplete == '1' ? 'day-complete' : 'day-incomplete');
+    $cal.find(`.calendar-day-${date}`).addClass(isComplete == 1 ? 'day-complete' : 'day-incomplete');
 }
 
-calQ.fn.calMarkAllAsValue = function(calendar, variable, value) {
+calQ.calMarkAllAsValue = function(calendar, variable, value) {
     $cal = $(`#${calendar}Calendar`);
     if ( $cal.find(`[data-variable=${variable}][value=${value}]`).length )
         $cal.find(`[data-variable=${variable}][value=${value}]`).filter( function() {
@@ -101,7 +100,7 @@ calQ.fn.calMarkAllAsValue = function(calendar, variable, value) {
         }).val(value).change();
 }
 
-calQ.fn.insertMarkAllButton = function(calendar, settings) {
+calQ.insertMarkAllButton = function(calendar, settings) {
     
     $.each( settings['buttons'], function(_, btn) {
         
@@ -111,7 +110,7 @@ calQ.fn.insertMarkAllButton = function(calendar, settings) {
         if ( btn.tooltip ) $(target).last().tooltip();
         
         $(target).last().on('click', function() {
-            calQ.fn.calMarkAllAsValue(calendar, btn.variable, btn.value);
+            calQ.calMarkAllAsValue(calendar, btn.variable, btn.value);
         });
         
         // Hacky css stuff, don't hate me
@@ -122,7 +121,7 @@ calQ.fn.insertMarkAllButton = function(calendar, settings) {
     
 }
 
-calQ.fn.updateMarkAllButtons = function(calendar) {
+calQ.updateMarkAllButtons = function(calendar) {
     $cal = $(`#${calendar}Calendar`);
     $cal.parent().find("button.markAllButton").show();
     $.each( calQ.config[calendar].buttons, function() {
@@ -131,16 +130,16 @@ calQ.fn.updateMarkAllButtons = function(calendar) {
     });
 }
 
-calQ.fn.setupSaving = function(calendar) {
+calQ.setupSaving = function(calendar) {
     $cal = $(`#${calendar}Calendar`);
     //Setup every save back to JSON
     $cal.find("[class^=event-item-input-]").on('click change', function() {
         let newVal = $(this).prop('type') == "checkbox" ? ($(this).is(':checked') ? '1' : '0') : $(this).val();
-        calQ.fn.jsonSaveCalendar(calendar, $(this).parent().data('date'), $(this).data('variable'), newVal);
+        calQ.jsonSaveCalendar(calendar, $(this).parent().data('date'), $(this).data('variable'), newVal);
     });
 }
 
-calQ.fn.setupValidation = function(calendar) {
+calQ.setupValidation = function(calendar) {
     $cal = $(`#${calendar}Calendar`);
     
     //Setup validation
@@ -156,7 +155,7 @@ calQ.fn.setupValidation = function(calendar) {
     });
 }
 
-calQ.fn.arrowNavigation = function(e) {
+calQ.arrowNavigation = function(e) {
     const arrowMap = {
         "ArrowLeft": -1,
         "ArrowUp": -7,
@@ -173,10 +172,19 @@ calQ.fn.arrowNavigation = function(e) {
     }
 };
 
+calQ.arrayIncludesObject = function( array, obj ) {
+    const json = JSON.stringify(obj);
+    array.forEach( a => {
+        if ( JSON.stringify(a) == json )
+            return true;
+    });
+    return false;
+}
+
 $(document).ready(function () {
     
     // Simple setup
-    document.onkeydown = calQ.fn.arrowNavigation;
+    document.onkeydown = calQ.arrowNavigation;
     window['moment-range'].extendMoment(moment);
     
     // Loop over all config
@@ -216,14 +224,13 @@ $(document).ready(function () {
                 
                 $.each(calSettings.questions, function() {
                     
-                    if ( json[date][this.variable] == "" ) 
-                        blanks.push(`${date}_${this.variable}`);
+                    let question = {date:date, name:this.variable};
                     
-                    if ( unique.includes(`${date}_${this.variable}`) || 
+                    if ( calQ.arrayIncludesObject(unique, question) ||
                          (isEmpty(json[date][this.variable]) && rangeObj.exclude.includes(this.variable)) )
                         return;
                     
-                    unique.push(`${date}_${this.variable}`);
+                    unique.push(question);
                     json[date][this.variable] = json[date][this.variable] || "";
                     events.push({
                         index: this.index,
@@ -236,42 +243,35 @@ $(document).ready(function () {
             }
         });
         
-        // Check if some values were in range at one point but no longer are. Remove them.
-        $.each( blanks.filter(x => !unique.includes(x)), function() {
-            let date = this.split('_')[0];
-            let name = this.split('_').slice(1).join('_');
-            delete json[date][name];
-        });
-        
         events.sort((a,b) => ( b.index < a.index ) ? 1 : -1); // Sort by question index for consistent display
         calQ.json[calName] = json;
         
         // Init the CLNDR
-        let $calendar = $(`#${calName}Calendar`);
-        $calendar.clndr({
+        let $cal = $(`#${calName}Calendar`);
+        $cal.clndr({
             template: calQ.template,
             events: events,
             forceSixRows: true,
             ready: function() {
-                calQ.fn.insertMarkAllButton(calName, calSettings);
-                calQ.fn.updateMarkAllButtons(calName);
+                calQ.insertMarkAllButton(calName, calSettings);
+                calQ.updateMarkAllButtons(calName);
             },
             clickEvents: {
                 click: function(target) {
-                    calQ.fn.updateDayComplete(calName);
-                    $calendar.find(".today").removeClass('today');
+                    calQ.updateDayComplete(calName);
+                    $cal.find(".today").removeClass('today');
                     $(target.element).addClass('today');
-                    calQ.fn.showDateQuestions(calName, target.date);
+                    calQ.showDateQuestions(calName, target.date);
                 },
                 onMonthChange: function(month) {
-                    calQ.fn.loadCalendarJSON(calName, month);
+                    calQ.loadCalendarJSON(calName, month);
                 }
             },
             doneRendering: function() {
-                calQ.fn.showDateQuestions(calName, moment());
-                calQ.fn.loadCalendarJSON(calName, moment());
-                calQ.fn.setupSaving(calName);
-                calQ.fn.setupValidation(calName);
+                calQ.showDateQuestions(calName, moment());
+                calQ.loadCalendarJSON(calName, moment());
+                calQ.setupSaving(calName);
+                calQ.setupValidation(calName);
             }
         });
         

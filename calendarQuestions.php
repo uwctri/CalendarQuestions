@@ -55,6 +55,12 @@ class calendarQuestions extends AbstractExternalModule {
             // Grab calendar question settings
             foreach( $settings['question'][$index] as $qindex => $question ) {
                 
+                $variable = $settings['question-variable-name'][$index][$qindex];
+                $type = $settings['question-type'][$index][$qindex];
+                
+                if ( empty($variable) || empty($question) || empty($type) )
+                    continue;
+                
                 $event = $settings['question-branch-event'][$index][$qindex];
                 $var = $settings['question-branch-variable'][$index][$qindex];
                 $val = $settings['question-branch-value'][$index][$qindex];
@@ -71,12 +77,11 @@ class calendarQuestions extends AbstractExternalModule {
                     }
                 }
                 
-                $variable = $settings['question-variable-name'][$index][$qindex];
                 if ( !$branchingLogicEnabled || $branchLogicPass) {
                     $calendars[$field]['questions'][$variable] = [
                         'index' => $qindex,
                         'text' => $question,
-                        'type' => $settings['question-type'][$index][$qindex],
+                        'type' => $type,
                         'variable' => $variable
                     ];
                 }
