@@ -3,7 +3,7 @@ $(document).ready(function() {
     var $modal = $('#external-modules-configure-modal');
     $modal.on('show.bs.modal', function() {
         // Making sure we are overriding this modules's modal only.
-        if ($(this).data('module') !== calQuestions.modulePrefix)
+        if ($(this).data('module') !== calQ.modulePrefix)
             return;
         
         if (typeof ExternalModules.Settings.prototype.resetConfigInstancesOld === 'undefined')
@@ -12,10 +12,10 @@ $(document).ready(function() {
         ExternalModules.Settings.prototype.resetConfigInstances = function() {
             ExternalModules.Settings.prototype.resetConfigInstancesOld();
             
-            if ($modal.data('module') !== calQuestions.modulePrefix)
+            if ($modal.data('module') !== calQ.modulePrefix)
                 return;
             
-            $modal.addClass('calQuestionsConfig');
+            $modal.addClass('calQConfig');
             
             // Style the Branching logic
             $modal.find("tr[field=question-branch-value] .external-modules-input-td").not(':contains(=)').prepend('= ');
@@ -31,10 +31,10 @@ $(document).ready(function() {
     
     $modal.on('hide.bs.modal', function() {
         // Making sure we are overriding this modules's modal only.
-        if ($(this).data('module') !== calQuestions.modulePrefix)
+        if ($(this).data('module') !== calQ.modulePrefix)
             return;
         
-        $(this).removeClass('calQuestionsConfig');
+        $(this).removeClass('calQConfig');
         
         if (typeof ExternalModules.Settings.prototype.resetConfigInstancesOld !== 'undefined')
             ExternalModules.Settings.prototype.resetConfigInstances = ExternalModules.Settings.prototype.resetConfigInstancesOld;

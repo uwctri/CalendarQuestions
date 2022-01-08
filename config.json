@@ -23,8 +23,8 @@
             "sub_settings":[
                 {
                     "key": "name",
-                    "name": "<b>Unique Calendar Name</b><br>Exact field label used to place the calendar",
-                    "type": "text",
+                    "name": "<b>Target Field</b><br>Used to place the calendar, must be a <b>Notes</b> field",
+                    "type": "field-list",
                     "required": true
                 },
                 {
@@ -167,6 +167,6 @@
         }
     ],
     "compatibility": {
-        "redcap-version-min": "9.8.0"
+        "redcap-version-min": "12.0.4"
     }
 }
