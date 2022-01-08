@@ -19,8 +19,8 @@
             "key": "calendar-config",
             "name": "<b>Calendar</b>",
             "type": "sub_settings",
-            "repeatable":true,
-            "sub_settings":[
+            "repeatable": true,
+            "sub_settings": [
                 {
                     "key": "name",
                     "name": "<b>Target Field</b><br>Used to place the calendar, must be a <b>Notes</b> field",
@@ -36,8 +36,8 @@
                     "key": "calendar-questions",
                     "name": "<b>Questions</b>",
                     "type": "sub_settings",
-                    "repeatable":true,
-                    "sub_settings":[
+                    "repeatable": true,
+                    "sub_settings": [
                         {
                             "key": "question",
                             "name": "<b>Question Text</b>",
@@ -90,14 +90,14 @@
                             "name": "<b>Branching Logic Value</b>",
                             "type": "text"
                         }
-                    ] 
+                    ]
                 },
                 {
                     "key": "calendar-range",
                     "name": "<b>Range(s)</b>",
                     "type": "sub_settings",
-                    "repeatable":true,
-                    "sub_settings":[
+                    "repeatable": true,
+                    "sub_settings": [
                         {
                             "key": "start-event",
                             "name": "<b>Start Range</b><br>Date field",
@@ -133,14 +133,14 @@
                             "name": "<b>Exclude Questions</b><br>List of variables to exlclude for this range, comma delimited",
                             "type": "text"
                         }
-                    ] 
+                    ]
                 },
                 {
                     "key": "calendar-buttons",
                     "name": "<b>Mark All Button(s)</b>",
                     "type": "sub_settings",
-                    "repeatable":true,
-                    "sub_settings":[
+                    "repeatable": true,
+                    "sub_settings": [
                         {
                             "key": "button-text",
                             "name": "<b>Button Text</b>",
@@ -161,7 +161,7 @@
                             "name": "<b>Value</b>",
                             "type": "text"
                         }
-                    ] 
+                    ]
                 }
             ]
         }

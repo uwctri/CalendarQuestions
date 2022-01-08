@@ -200,5 +200,3 @@ class calendarQuestions extends AbstractExternalModule {
         echo "<link rel='stylesheet' href={$this->getUrl("style.css")}>";
     }
 }
-
-?>
