@@ -163,10 +163,10 @@ calQ.arrowNavigation = function(e) {
         "ArrowDown": 7
     };
     if (!Object.keys(arrowMap).includes(event.key)) return;
-    const date = $(".clndr-grid .today").children().data('date');
-    const newDate = moment(date).add(arrowMap[event.key], 'days').format("YYYY-MM-DD");
-    const $el = $(`.calendar-day-${newDate}`);
-    if ( $el.length ) {
+    const date = moment($(".clndr-grid .today").children().data('date'));
+    const newDate = moment(date).add(arrowMap[event.key], 'days');
+    const $el = $(`.calendar-day-${newDate.format("YYYY-MM-DD")}`);
+    if ( $el.length && date.format("MM") == newDate.format("MM") ) {
         $el.click();
         e.preventDefault();
     }
@@ -264,6 +264,7 @@ $(document).ready(function () {
                 },
                 onMonthChange: function(month) {
                     calQ.loadCalendarJSON(calName, month.format("MM"));
+                    $(`.calendar-day-${month.format("YYYY-MM-DD")}`).click();
                 }
             },
             doneRendering: function() {
