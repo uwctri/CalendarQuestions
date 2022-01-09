@@ -17,8 +17,8 @@ calQ.loadCalendarJSON = function (calendar, month) {
     const $cal = $(`#${calendar}Calendar`);
 
     // Loop over data for the month
-    $.each(calQ.json[calendar], function (date, vars) {
-        $.each(vars, function (varName, value) {
+    $.each(calQ.json[calendar], (date, vars) => {
+        $.each(vars, (varName, value) => {
 
             // Skip days outside the month
             if (varName[0] == "_" || (moment(date).format("MM") != month))
@@ -78,7 +78,7 @@ calQ.updateDayComplete = function (calendar, date) {
         return;
 
     calQ.json[calendar][date]['_complete'] = 1;
-    $.each(calQ.json[calendar][date], function (varName, value) {
+    $.each(calQ.json[calendar][date], (varName, value) => {
         if (value !== undefined && varName != "_complete" &&
             calQ.config[calendar].questions[varName].type != 'check' &&
             value.toString() == "") {
@@ -112,7 +112,7 @@ calQ.calMarkAllAsValue = function (calendar, variable, value) {
     const type = calQ.config[calendar].questions[variable].type;
     const month = $(".clndr-grid .today").children().data('date').split('-')[1];
 
-    $.each(calQ.json[calendar], function (date, data) {
+    $.each(calQ.json[calendar], (date, data) => {
         if (date.split('-')[1] != month || data['_complete'] == 1)
             return;
         calQ.json[calendar][date][variable] = value;
@@ -127,20 +127,18 @@ calQ.calMarkAllAsValue = function (calendar, variable, value) {
 */
 calQ.insertMarkAllButton = function (calendar, settings) {
 
-    $.each(settings['buttons'], function (_, btn) {
+    $.each(settings['buttons'], (_, btn) => {
 
         $(`#${calendar}Calendar`).append(calQ.btn.replace('TEXT', btn.text).replace('TOOLTIP', btn.tooltip));
 
-        let target = `#${calendar}Calendar button`;
-        if (btn.tooltip) $(target).last().tooltip();
+        const $target = $(`#${calendar}Calendar button`);
+        if (btn.tooltip) $target.last().tooltip();
 
-        $(target).last().on('click', function () {
-            calQ.calMarkAllAsValue(calendar, btn.variable, btn.value);
-        });
+        $target.last().on('click', () => calQ.calMarkAllAsValue(calendar, btn.variable, btn.value));
 
         // Hacky css stuff, don't hate me
-        if ($(target).first().css('top')) {
-            $(target).last().css('top', $(target).first().css('top').replace('px', '') - (35 * ($(target).length - 1)));
+        if ($target.first().css('top')) {
+            $target.last().css('top', $target.first().css('top').replace('px', '') - (35 * ($target.length - 1)));
         }
     });
 };
@@ -151,9 +149,9 @@ calQ.insertMarkAllButton = function (calendar, settings) {
 calQ.updateMarkAllButtons = function (calendar) {
     const $cal = $(`#${calendar}Calendar`);
     $cal.parent().find("button.markAllButton").show();
-    $.each(calQ.config[calendar].buttons, function () {
-        if (!$cal.find(`[data-variable=${this.variable}]:visible`).length)
-            $(`button.markAllButton:contains(${this.text})`).hide();
+    $.each(calQ.config[calendar].buttons, (_, btn) => {
+        if (!$cal.find(`[data-variable=${btn.variable}]:visible`).length)
+            $(`button.markAllButton:contains(${btn.text})`).hide();
     });
 };
 
@@ -163,9 +161,10 @@ calQ.updateMarkAllButtons = function (calendar) {
 calQ.setupSaving = function (calendar) {
     const $cal = $(`#${calendar}Calendar`);
     //Setup every save back to JSON
-    $cal.find("[class^=event-item-input-]").on('click change', function () {
-        let newVal = $(this).prop('type') == "checkbox" ? ($(this).is(':checked') ? '1' : '0') : $(this).val();
-        calQ.jsonSaveCalendar(calendar, $(this).parent().data('date'), $(this).data('variable'), newVal);
+    $cal.find("[class^=event-item-input-]").on('click change', (event) => {
+        const $target = $(event.currentTarget);
+        const newVal = $target.prop('type') == "checkbox" ? ($target.is(':checked') ? '1' : '0') : $target.val();
+        calQ.jsonSaveCalendar(calendar, $target.parent().data('date'), $target.data('variable'), newVal);
     });
 };
 
@@ -175,15 +174,17 @@ calQ.setupSaving = function (calendar) {
 calQ.setupValidation = function (calendar) {
     const $cal = $(`#${calendar}Calendar`);
 
-    //Setup validation
-    $cal.find(`.event-item-input-int`).on("keypress keyup blur", function (event) {
-        $(this).val($(this).val().replace(/[^\d].+/, ""));
+    // Only int and float have any validation on them
+    $cal.find(`.event-item-input-int`).on("keypress keyup blur", (event) => {
+        const $target = $(event.currentTarget);
+        $target.val($target.val().replace(/[^\d].+/, ""));
         if ((event.which < 48 || event.which > 57))
             event.preventDefault();
     });
-    $cal.find(`.event-item-input-float`).on("keypress keyup blur", function (event) {
-        $(this).val($(this).val().replace(/[^0-9\.]/g, ""));
-        if ((event.which != 46 || $(this).val().indexOf('.') != -1) && (event.which < 48 || event.which > 57))
+    $cal.find(`.event-item-input-float`).on("keypress keyup blur", (event) => {
+        const $target = $(event.currentTarget);
+        $target.val($target.val().replace(/[^0-9\.]/g, ""));
+        if ((event.which != 46 || $target.val().indexOf('.') != -1) && (event.which < 48 || event.which > 57))
             event.preventDefault();
     });
 };
@@ -191,35 +192,21 @@ calQ.setupValidation = function (calendar) {
 /*
 
 */
-calQ.arrowNavigation = function (e) {
+calQ.arrowNavigation = function (event) {
     const arrowMap = {
         "ArrowLeft": -1,
         "ArrowUp": -7,
         "ArrowRight": 1,
         "ArrowDown": 7
     };
-    if (!Object.keys(arrowMap).includes(e.key)) return;
+    if (!Object.keys(arrowMap).includes(event.key)) return;
     const date = moment($(".clndr-grid .today").children().data('date'));
-    const newDate = moment(date).add(arrowMap[e.key], 'days');
+    const newDate = moment(date).add(arrowMap[event.key], 'days');
     const $el = $(`.calendar-day-${newDate.format("YYYY-MM-DD")}`);
     if ($el.length) {
         $el.click();
-        e.preventDefault();
+        event.preventDefault();
     }
-};
-
-/*
-
-*/
-calQ.arrayIncludesObject = function (array, obj) {
-    let objString = Object.entries(obj);
-    objString = `${objString[0][1]}_${objString[1][1]}`;
-    array.forEach(a => {
-        let aString = Object.entries(a);
-        if (objString == `${aString[0][1]}_${aString[1][1]}`)
-            return true;
-    });
-    return false;
 };
 
 /*
@@ -232,14 +219,14 @@ calQ.setDate = function (calendar, date) {
     calQ.showDateQuestions(calendar, date);
 }
 
-$(document).ready(function () {
+$(document).ready(() => {
 
     // Simple setup
     document.onkeydown = calQ.arrowNavigation;
     window['moment-range'].extendMoment(moment);
 
     // Loop over all config
-    $.each(calQ.config, function (calName, calSettings) {
+    $.each(calQ.config, (calName, calSettings) => {
 
         // Prep the area for the calendar
         if ($(`[name=${calName}]`).length == 0)
@@ -255,7 +242,7 @@ $(document).ready(function () {
         let unique = {};
 
         // Build out the JSON with any new range info we might have
-        $.each(calSettings.range, function (_, rangeObj) {
+        $.each(calSettings.range, (_, rangeObj) => {
 
             // Skip if start/end ranges don't exist yet
             if (!rangeObj.start || !rangeObj.end)
@@ -273,20 +260,20 @@ $(document).ready(function () {
                     json[date]["_complete"] = 0;
                 }
 
-                $.each(calSettings.questions, function () {
+                $.each(calSettings.questions, (variable, question) => {
 
-                    if (unique[date].includes(this.variable) ||
-                        (isEmpty(json[date][this.variable]) && rangeObj.exclude.includes(this.variable)))
+                    if (unique[date].includes(variable) ||
+                        (isEmpty(json[date][variable]) && rangeObj.exclude.includes(variable)))
                         return;
 
-                    unique[date].push(this.variable);
-                    json[date][this.variable] = json[date][this.variable] || "";
+                    unique[date].push(variable);
+                    json[date][variable] = json[date][variable] || "";
                     events.push({
-                        index: this.index,
+                        index: question.index,
                         date: date,
-                        question: this.text,
-                        type: this.type,
-                        variable: this.variable
+                        question: question.text,
+                        type: question.type,
+                        variable: variable
                     });
                 });
             }
@@ -304,7 +291,7 @@ $(document).ready(function () {
             forceSixRows: true,
 
             // Runs ONCE when the calendar is rendered
-            ready: function () {
+            ready: () => {
                 calQ.insertMarkAllButton(calName, calSettings);
                 calQ.updateMarkAllButtons(calName);
             },
@@ -312,7 +299,7 @@ $(document).ready(function () {
             clickEvents: {
 
                 // Runs when a new date is clicked (or arrowed to)
-                click: function (target) {
+                click: (target) => {
                     const date = moment($(".clndr-grid .today").children().data('date'));
                     if (target.date.format("MM") == date.format("MM")) {
                         calQ.setDate(calName, target.date.format("YYYY-MM-DD"));
@@ -320,13 +307,13 @@ $(document).ready(function () {
                 },
 
                 // Runs on every month change
-                onMonthChange: function (month) {
-                    calQ.setDate(calName, month.format("YYYY-MM-DD"));
+                onMonthChange: (firstOfMonth) => {
+                    calQ.setDate(calName, firstOfMonth.format("YYYY-MM-DD"));
                 }
             },
 
             // Runs on every month change AND after inital load
-            doneRendering: function () {
+            doneRendering: () => {
                 calQ.showDateQuestions(calName, moment());
                 calQ.loadCalendarJSON(calName, moment().format("MM"));
                 calQ.setupSaving(calName);
