@@ -151,52 +151,52 @@
 /***************/
 /* Config Page */
 /***************/
-.calQuestionsConfig thead {
+.calQConfig thead {
     display: none;
 }
-.calQuestionsConfig .external-modules-instance-label {
+.calQConfig .external-modules-instance-label {
     display: none;
 }
-.calQuestionsConfig tr[field=question-branch-variable] label {
+.calQConfig tr[field=question-branch-variable] label {
     display: none;
 }
-.calQuestionsConfig tr[field=question-branch-value] label {
+.calQConfig tr[field=question-branch-value] label {
     display: none;
 }
-.calQuestionsConfig tr[field=question-branch-variable] td {
+.calQConfig tr[field=question-branch-variable] td {
     border: none;
     padding-top: 0.15rem;
     padding-bottom: 0.15rem;
 }
-.calQuestionsConfig tr[field=question-branch-value] td {
+.calQConfig tr[field=question-branch-value] td {
     border: none;
     padding-top: 0.15rem;
 }
-.calQuestionsConfig tr[field=question-branch-event] td {
+.calQConfig tr[field=question-branch-event] td {
     padding-bottom: 0;
 }
-.calQuestionsConfig tr[field=question-branch-value] .external-modules-input-td input {
+.calQConfig tr[field=question-branch-value] .external-modules-input-td input {
     width: 94%;
 }
-.calQuestionsConfig tr[field=start-variable] label {
+.calQConfig tr[field=start-variable] label {
     display: none;
 }
-.calQuestionsConfig tr[field=end-variable] label {
+.calQConfig tr[field=end-variable] label {
     display: none;
 }
-.calQuestionsConfig tr[field=start-event] td {
+.calQConfig tr[field=start-event] td {
     border-bottom: none;
     padding-bottom: 0.15rem;
 }
-.calQuestionsConfig tr[field=end-event] td {
+.calQConfig tr[field=end-event] td {
     border-bottom: none;
     padding-bottom: 0.15rem;
 }
-.calQuestionsConfig tr[field=start-variable] td {
+.calQConfig tr[field=start-variable] td {
     border-top: none;
     padding-top: 0.15rem;
 }
-.calQuestionsConfig tr[field=end-variable] td {
+.calQConfig tr[field=end-variable] td {
     border-top: none;
     padding-top: 0.15rem;
 }
