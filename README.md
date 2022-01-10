@@ -18,4 +18,5 @@ Configuration consists of three major areas:
 
 ## Call Outs
 
+* Our CSS looks pretty bad on smaller screens.
 * Technical - All dates passed in JS are currently YMD strings, this should be switched the moment objects in a future release

@@ -1,4 +1,5 @@
 calQ.json = {};
+calQ.filters = {};
 calQ.wrap = '<td class="labelrc col-12" colspan="3"><div class="clndr" id="CALNAME"></div></td>';
 calQ.btn = '<button type="button" class="btn btn-dark btn-sm markAllButton" data-toggle="tooltip" title="TOOLTIP">TEXT</button>';
 
@@ -48,12 +49,13 @@ calQ.loadCalendarJSON = function (calendar, month) {
 
 */
 calQ.showDateQuestions = function (calendar, date) {
-    date = moment(date);
+    const mDate = moment(date);
     const $cal = $(`#${calendar}Calendar`);
     $cal.find(`.event-item`).hide();
-    if (!calQ.config[calendar]['noFuture'] || (moment().diff(date, 'days') > 0)) {
-        $cal.find(`.event-item[data-date=${date.format('YYYY-MM-DD')}]`).show();
+    if (!calQ.config[calendar]['noFuture'] || (moment().diff(mDate, 'days') > 0)) {
+        $cal.find(`.event-item[data-date=${mDate.format('YYYY-MM-DD')}]`).show();
     }
+    calQ.applyReplaceFilter(calendar, date);
     calQ.updateMarkAllButtons(calendar);
 };
 
@@ -212,6 +214,19 @@ calQ.arrowNavigation = function (event) {
 /*
 
 */
+calQ.applyReplaceFilter = function (calendar, date) {
+    const filter = calQ.filters[calendar];
+    if (!filter[date] || !filter[date].length)
+        return;
+    const $cal = $(`#${calendar}Calendar`);
+    filter[date].forEach(varName => {
+        $cal.find(`[data-variable=${varName}]`).parent().hide();
+    });
+}
+
+/*
+
+*/
 calQ.setDate = function (calendar, date) {
     calQ.updateDayComplete(calendar);
     $(".today").removeClass('today');
@@ -240,6 +255,7 @@ $(document).ready(() => {
 
         let events = [];
         let unique = {};
+        calQ.filters[calName] = {};
 
         // Build out the JSON with any new range info we might have
         $.each(calSettings.range, (_, rangeObj) => {
@@ -252,6 +268,7 @@ $(document).ready(() => {
             for (let day of moment.range(rangeObj.start, rangeObj.end).by('days')) {
 
                 const date = day.format('YYYY-MM-DD');
+                calQ.filters[calName][date] = calQ.filters[calName][date] || [];
                 unique[date] = unique[date] || [];
 
                 // Init Json structure
@@ -260,15 +277,17 @@ $(document).ready(() => {
                     json[date]["_complete"] = 0;
                 }
 
+                // Flip through all the questions for today
                 $.each(calSettings.questions, (variable, question) => {
 
                     if (unique[date].includes(variable) ||
                         (isEmpty(json[date][variable]) && rangeObj.exclude.includes(variable)))
                         return;
 
+                    if (question.replace)
+                        calQ.filters[calName][date].push(question.replace);
+
                     unique[date].push(variable);
-                    console.log(date)
-                    console.log(unique[date]);
                     json[date][variable] = json[date][variable] || "";
                     events.push({
                         index: question.index,
@@ -306,6 +325,7 @@ $(document).ready(() => {
                     if (target.date.format("MM") == date.format("MM")) {
                         calQ.setDate(calName, target.date.format("YYYY-MM-DD"));
                     }
+
                 },
 
                 // Runs on every month change
@@ -316,7 +336,7 @@ $(document).ready(() => {
 
             // Runs on every month change AND after inital load
             doneRendering: () => {
-                calQ.showDateQuestions(calName, moment());
+                calQ.showDateQuestions(calName, moment().format("YYYY-MM-DD"));
                 calQ.loadCalendarJSON(calName, moment().format("MM"));
                 calQ.setupSaving(calName);
                 calQ.setupValidation(calName);

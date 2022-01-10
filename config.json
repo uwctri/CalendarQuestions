@@ -89,6 +89,11 @@
                             "key": "question-branch-value",
                             "name": "<b>Branching Logic Value</b>",
                             "type": "text"
+                        },
+                        {
+                            "key": "question-replace",
+                            "name": "<b>Replace Questions</b><br>List of variables to exclude (replace) when this question is shown on a day, comma delimited",
+                            "type": "text"
                         }
                     ]
                 },
