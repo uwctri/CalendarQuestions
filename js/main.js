@@ -252,7 +252,7 @@ $(document).ready(() => {
             for (let day of moment.range(rangeObj.start, rangeObj.end).by('days')) {
 
                 const date = day.format('YYYY-MM-DD');
-                unique[date] = [];
+                unique[date] = unique[date] || [];
 
                 // Init Json structure
                 if (json[date] === undefined) {
@@ -267,6 +267,8 @@ $(document).ready(() => {
                         return;
 
                     unique[date].push(variable);
+                    console.log(date)
+                    console.log(unique[date]);
                     json[date][variable] = json[date][variable] || "";
                     events.push({
                         index: question.index,
