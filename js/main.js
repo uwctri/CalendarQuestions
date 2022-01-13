@@ -92,6 +92,8 @@ calQ.updateDayComplete = function (calendar, date) {
     if (updateColor) {
         calQ.colorDayComplete(calendar, calQ.json[calendar][date]['_complete'], date);
     }
+
+    $(`textarea[name=${calendar}]`).val(JSON.stringify(calQ.json[calendar]));
 };
 
 /*
