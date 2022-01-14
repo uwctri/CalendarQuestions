@@ -246,7 +246,7 @@ $(document).ready(() => {
     $.each(calQ.config, (calName, calSettings) => {
 
         // Prep the area for the calendar
-        if ($(`[name=${calName}]`).length == 0)
+        if ($(`[name=${calName}]:visible`).length == 0)
             return;
         $(`#${calName}-tr td`).hide()
         $(`#${calName}-tr`).append(calQ.wrap.replace('CALNAME', `${calName}Calendar`));
