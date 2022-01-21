@@ -20,7 +20,7 @@ calQ.loadCalendarJSON = function (calendar, month) {
     // Loop over data for the month
     $.each(calQ.json[calendar], (date, vars) => {
         $.each(vars, (varName, value) => {
-
+            
             // Skip days outside the month
             if (varName[0] == "_" || (moment(date).format("MM") != month))
                 return;
@@ -317,6 +317,10 @@ $(document).ready(() => {
             ready: () => {
                 calQ.insertMarkAllButton(calName, calSettings);
                 calQ.updateMarkAllButtons(calName);
+                calQ.showDateQuestions(calName, moment().format("YYYY-MM-DD"));
+                calQ.loadCalendarJSON(calName, moment().format("MM"));
+                calQ.setupSaving(calName);
+                calQ.setupValidation(calName);
             },
 
             clickEvents: {
@@ -333,15 +337,11 @@ $(document).ready(() => {
                 // Runs on every month change
                 onMonthChange: (firstOfMonth) => {
                     calQ.setDate(calName, firstOfMonth.format("YYYY-MM-DD"));
+                    calQ.showDateQuestions(calName, firstOfMonth.format("YYYY-MM-DD"));
+                    calQ.loadCalendarJSON(calName, firstOfMonth.format("MM"));
+                    calQ.setupSaving(calName);
+                    calQ.setupValidation(calName);
                 }
-            },
-
-            // Runs on every month change AND after inital load
-            doneRendering: () => {
-                calQ.showDateQuestions(calName, moment().format("YYYY-MM-DD"));
-                calQ.loadCalendarJSON(calName, moment().format("MM"));
-                calQ.setupSaving(calName);
-                calQ.setupValidation(calName);
             }
         });
     });
