@@ -210,6 +210,7 @@ calQ.arrowNavigation = function (event) {
     if ($el.length) {
         $el.click();
         event.preventDefault();
+        $(".clndr:visible").find('input:visible, textarea:visible').first().focus();
     }
 };
 
