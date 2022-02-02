@@ -25,18 +25,18 @@ calQ.loadCalendarJSON = function (calendar, month) {
             if (varName[0] == "_" || (moment(date).format("MM") != month))
                 return;
 
-            $el = $cal.find(`.event-item[data-date=${date}] *[data-variable=${varName}]`);
+            let search = `.event-item[data-date=${date}] *[data-variable=${varName}]`;
             const type = calQ.config[calendar].questions[varName].type;
 
             // Enter data based on the format
             if (["text", "int", "float"].includes(type)) {
-                $el.val(value);
+                $cal.find(search).val(value);
             }
             else if (!isEmpty(value) && type == "yesno") {
-                $el.find(`[value=${value}]`).attr('checked', true);
+                $cal.find(search + `[value=${value}]`).attr('checked', true);
             }
             else if (!isEmpty(value) && value == '1' && type == "check") {
-                $el.attr('checked', true);
+                $cal.find(search).attr('checked', true);
             }
         });
 
