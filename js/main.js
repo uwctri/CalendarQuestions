@@ -6,13 +6,6 @@ calQ.btn = '<button type="button" class="btn btn-dark btn-sm markAllButton" data
 /*
 
 */
-calQ.clearCalendarData = function (calendar) {
-    $(`textarea[name=${calendar}]`).val('{}');
-}
-
-/*
-
-*/
 calQ.loadCalendarJSON = function (calendar, month) {
 
     const $cal = $(`#${calendar}Calendar`);
@@ -20,7 +13,7 @@ calQ.loadCalendarJSON = function (calendar, month) {
     // Loop over data for the month
     $.each(calQ.json[calendar], (date, vars) => {
         $.each(vars, (varName, value) => {
-            
+
             // Skip days outside the month
             if (varName[0] == "_" || (moment(date).format("MM") != month))
                 return;
@@ -332,7 +325,6 @@ $(document).ready(() => {
                     if (target.date.format("MM") == date.format("MM")) {
                         calQ.setDate(calName, target.date.format("YYYY-MM-DD"));
                     }
-
                 },
 
                 // Runs on every month change
