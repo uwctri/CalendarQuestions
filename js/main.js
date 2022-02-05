@@ -1,7 +1,5 @@
 calQ.json = {};
 calQ.filters = {};
-calQ.wrap = '<td class="labelrc col-12" colspan="3"><div class="clndr" id="CALNAME"></div></td>';
-calQ.btn = '<button type="button" class="btn btn-dark btn-sm markAllButton" data-toggle="tooltip" title="TOOLTIP">TEXT</button>';
 
 /*
 Parse and load onto the screen data for a specific calendar and month
@@ -101,7 +99,7 @@ calQ.colorDayComplete = function (calendar, date, isComplete) {
     if (calQ.config[calendar]['noFuture'] && (moment().diff(moment(date, 'YYYY-MM-DD'), 'days') <= 0))
         return;
     $cal.find(`.calendar-day-${date}`).addClass(isComplete == 1 ? 'day-complete' : 'day-incomplete');
-}
+};
 
 /*
 Event listener for the Mark all Button. Marks all variables in calendar as value
@@ -128,7 +126,7 @@ calQ.insertMarkAllButton = function (calendar, settings) {
     $.each(settings['buttons'], (_, btn) => {
 
         // Prep the template
-        $(`#${calendar}Calendar`).append(calQ.btn.replace('TEXT', btn.text).replace('TOOLTIP', btn.tooltip));
+        $(`#${calendar}Calendar`).append(calQ.template.btn.replace('TEXT', btn.text).replace('TOOLTIP', btn.tooltip));
 
         // Find the target and enable tooltip
         const $target = $(`#${calendar}Calendar button`);
@@ -232,7 +230,7 @@ calQ.applyReplaceFilter = function (calendar, date) {
     filter[date].forEach(varName => {
         $cal.find(`[data-variable=${varName}]`).parent().hide();
     });
-}
+};
 
 /*
 Update the calendar to a new date
@@ -242,7 +240,7 @@ calQ.setDate = function (calendar, date) {
     $(".today").removeClass('today');
     $(`.calendar-day-${date}`).addClass('today');
     calQ.showDateQuestions(calendar, date);
-}
+};
 
 $(document).ready(() => {
 
@@ -257,7 +255,7 @@ $(document).ready(() => {
         if ($(`[name=${calName}]:visible`).length == 0)
             return;
         $(`#${calName}-tr td`).hide()
-        $(`#${calName}-tr`).append(calQ.wrap.replace('CALNAME', `${calName}Calendar`));
+        $(`#${calName}-tr`).append(calQ.template.td.replace('CALNAME', `${calName}Calendar`));
 
         // Load JSON from the text area
         let json = $(`textarea[name=${calName}]`).val();
@@ -317,7 +315,7 @@ $(document).ready(() => {
         // Init the CLNDR
         let $cal = $(`#${calName}Calendar`);
         $cal.clndr({
-            template: calQ.template,
+            template: calQ.template.calendar,
             events: events,
             forceSixRows: true,
 

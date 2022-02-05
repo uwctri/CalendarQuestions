@@ -1,37 +1,66 @@
+<td class="labelrc col-12" colspan="3">
+  <div class="clndr" id="CALNAME"></div>
+</td>
+##
+<button type="button" class="btn btn-dark btn-sm markAllButton" data-toggle="tooltip" title="TOOLTIP">TEXT</button>
+##
+<a class="dropdown-item" href="#" title="TOOLTIP">TEXT</a>
+##
+<div class="btn-group">
+  <button type="button" class="btn btn-danger">Mark all...</button>
+  <button type="button" class="btn btn-danger dropdown-toggle dropdown-toggle-split" data-toggle="dropdown">
+    <span class="sr-only">Toggle Dropdown</span>
+  </button>
+  <div class="dropdown-menu">
+  </div>
+</div>
+##
 <div class="clndr-controls">
   <div class="clndr-previous-button">‹</div>
-  <div class="month"><%= month %></div>
+  <div class="month">
+    <%= month %>
+  </div>
   <div class="clndr-next-button">›</div>
 </div>
 <div class="clndr-grid">
   <div class="days-of-the-week clearfix">
     <% _.each(daysOfTheWeek, function(day) { %>
-      <div class="header-day"><%= day %></div>
-    <% }); %>
+      <div class="header-day">
+        <%= day %>
+      </div>
+      <% }); %>
   </div>
   <div class="days clearfix">
     <% _.each(days, function(day) { %>
       <div class="<%= day.classes %>" id="<%= day.id %>">
-        <span class="day-number" data-date="<%= day.date.format("YYYY-MM-DD") %>" ><%= day.day %></span>
+        <span class="day-number" data-date="<%= day.date.format(" YYYY-MM-DD") %>" ><%= day.day %></span>
       </div>
-    <% }); %>
+      <% }); %>
   </div>
 </div>
 <div class="event-listing">
   <div class="event-listing-title">Questions</div>
   <% _.each(eventsThisMonth, function(event) { %>
-      <div class="event-item" <% if(event.type == "check") { %> style="display:flex"  <% } %> data-date="<%= event.date %>">
-        <% if(event.type == "check") { %> 
-        <input name="<%= event.variable %>-<%= event.date %>-checkbox" class="event-item-input-checkbox" type="checkbox" data-variable="<%= event.variable %>">
-        <% } %>
-        <div class="event-item-question"><%= event.question %></div>
-        <% if( ["text","float","int"].includes(event.type) ) { %> 
-        <textarea rows="1" class="event-item-input-<%= event.type %>" data-variable="<%= event.variable %>" ></textarea>
-        <% } %>
-        <% if(event.type == "yesno") { %> 
-        <input name="<%= event.variable %>-<%= event.date %>-radio" class="event-item-input-yesno" type="radio" data-variable="<%= event.variable %>" value="1"><span class="event-item-input-label">Yes</span>
-        <input name="<%= event.variable %>-<%= event.date %>-radio" class="event-item-input-yesno" type="radio" data-variable="<%= event.variable %>" value="0"><span class="event-item-input-label">No</span>
-        <% } %>
-      </div>
-  <% }); %>
+    <div class="event-item" <% if(event.type=="check" ) { %> style="display:flex" <% } %> data-date="<%= event.date %>">
+          <% if(event.type=="check" ) { %>
+            <input name="<%= event.variable %>-<%= event.date %>-checkbox" class="event-item-input-checkbox"
+              type="checkbox" data-variable="<%= event.variable %>">
+            <% } %>
+              <div class="event-item-question">
+                <%= event.question %>
+              </div>
+              <% if( ["text","float","int"].includes(event.type) ) { %>
+                <textarea rows="1" class="event-item-input-<%= event.type %>"
+                  data-variable="<%= event.variable %>"></textarea>
+                <% } %>
+                  <% if(event.type=="yesno" ) { %>
+                    <input name="<%= event.variable %>-<%= event.date %>-radio" class="event-item-input-yesno"
+                      type="radio" data-variable="<%= event.variable %>" value="1"><span
+                      class="event-item-input-label">Yes</span>
+                    <input name="<%= event.variable %>-<%= event.date %>-radio" class="event-item-input-yesno"
+                      type="radio" data-variable="<%= event.variable %>" value="0"><span
+                      class="event-item-input-label">No</span>
+                    <% } %>
+    </div>
+    <% }); %>
 </div>

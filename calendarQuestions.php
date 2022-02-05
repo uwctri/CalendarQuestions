@@ -158,6 +158,7 @@ class calendarQuestions extends AbstractExternalModule
 
         if (!empty($calendars)) {
             $template = file_get_contents(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'template.html');
+            $template = array_combine(["td", "btn", "btnLink", "btnGroup", "calendar"], explode("##", $template));
             $this->initGlobal();
             $this->passArgument('template', $template);
             $this->passArgument('config', $calendars);
