@@ -4,7 +4,7 @@ calQ.wrap = '<td class="labelrc col-12" colspan="3"><div class="clndr" id="CALNA
 calQ.btn = '<button type="button" class="btn btn-dark btn-sm markAllButton" data-toggle="tooltip" title="TOOLTIP">TEXT</button>';
 
 /*
-
+Parse and load onto the screen data for a specific calendar and month
 */
 calQ.loadCalendarJSON = function (calendar, month) {
 
@@ -33,13 +33,13 @@ calQ.loadCalendarJSON = function (calendar, month) {
             }
         });
 
-        calQ.colorDayComplete(calendar, vars['_complete'], date);
+        calQ.colorDayComplete(calendar, date, vars['_complete']);
 
     });
 };
 
 /*
-
+Show the daily questions for a calendar on a date
 */
 calQ.showDateQuestions = function (calendar, date) {
     const mDate = moment(date);
@@ -53,7 +53,7 @@ calQ.showDateQuestions = function (calendar, date) {
 };
 
 /*
-
+Save a new value for a varaible on a date, in a speicifc calendar 
 */
 calQ.jsonSaveCalendar = function (calendar, date, variable, value) {
     calQ.json[calendar][date][variable] = value;
@@ -62,12 +62,15 @@ calQ.jsonSaveCalendar = function (calendar, date, variable, value) {
 };
 
 /*
-
+Review a specific date on a calendar to determine if all needed
+data has been collected or not. If no date is specified then the
+currently highlighted date is used and the day is recolored to
+red or green.
 */
 calQ.updateDayComplete = function (calendar, date) {
 
     const updateColor = !!!date;
-    date = date || $(".clndr-grid .today").children().data('date');
+    date = date || $(`#${calendar}Calendar .clndr-grid .today`).children().data('date');
 
     if (!calQ.json[calendar][date])
         return;
@@ -83,16 +86,16 @@ calQ.updateDayComplete = function (calendar, date) {
     });
 
     if (updateColor) {
-        calQ.colorDayComplete(calendar, calQ.json[calendar][date]['_complete'], date);
+        calQ.colorDayComplete(calendar, date, calQ.json[calendar][date]['_complete']);
     }
 
     $(`textarea[name=${calendar}]`).val(JSON.stringify(calQ.json[calendar]));
 };
 
 /*
-
+Update the color of the day on the calendar's display for a given day
 */
-calQ.colorDayComplete = function (calendar, isComplete, date) {
+calQ.colorDayComplete = function (calendar, date, isComplete) {
     const $cal = $(`#${calendar}Calendar`);
     $cal.find(`.calendar-day-${date}`).removeClass('day-complete day-incomplete');
     if (calQ.config[calendar]['noFuture'] && (moment().diff(moment(date, 'YYYY-MM-DD'), 'days') <= 0))
@@ -101,13 +104,11 @@ calQ.colorDayComplete = function (calendar, isComplete, date) {
 }
 
 /*
-
+Event listener for the Mark all Button. Marks all variables in calendar as value
 */
 calQ.calMarkAllAsValue = function (calendar, variable, value) {
 
-    const $cal = $(`#${calendar}Calendar`);
-    const type = calQ.config[calendar].questions[variable].type;
-    const month = $(".clndr-grid .today").children().data('date').split('-')[1];
+    const month = $(`#${calendar}Calendar .clndr-grid .today`).children().data('date').split('-')[1];
 
     $.each(calQ.json[calendar], (date, data) => {
         if (date.split('-')[1] != month || data['_complete'] == 1)
@@ -120,43 +121,56 @@ calQ.calMarkAllAsValue = function (calendar, variable, value) {
 };
 
 /*
-
+One time insert of mark all buttons
 */
 calQ.insertMarkAllButton = function (calendar, settings) {
 
     $.each(settings['buttons'], (_, btn) => {
 
+        // Prep the template
         $(`#${calendar}Calendar`).append(calQ.btn.replace('TEXT', btn.text).replace('TOOLTIP', btn.tooltip));
 
+        // Find the target and enable tooltip
         const $target = $(`#${calendar}Calendar button`);
         if (btn.tooltip) $target.last().tooltip();
 
+        // Setup event listener
         $target.last().on('click', () => calQ.calMarkAllAsValue(calendar, btn.variable, btn.value));
+    });
+};
 
-        // Hacky css stuff, don't hate me
-        if ($target.first().css('top')) {
-            $target.last().css('top', $target.first().css('top').replace('px', '') - (35 * ($target.length - 1)));
+/*
+Update which mark-all buttons are shown based on what is currently displayed.
+*/
+calQ.updateMarkAllButtons = function (calendar) {
+
+    // Setup and show all buttons
+    const $cal = $(`#${calendar}Calendar`);
+    $cal.parent().find("button.markAllButton").show();
+    let btnCount = 0;
+
+    $.each(calQ.config[calendar].buttons, (_, btn) => {
+
+        let $target = $cal.find(`button.markAllButton:contains(${btn.text})`);
+
+        // Hide buttons that aren't needed
+        if (!$cal.find(`[data-variable=${btn.variable}]:visible`).length) {
+            $target.hide();
+        } else {
+            // Hacky css stuff, don't hate me
+            $target.css('transform', `translateY(${-35 * btnCount}px)`);
+            btnCount += 1;
         }
     });
 };
 
 /*
-
-*/
-calQ.updateMarkAllButtons = function (calendar) {
-    const $cal = $(`#${calendar}Calendar`);
-    $cal.parent().find("button.markAllButton").show();
-    $.each(calQ.config[calendar].buttons, (_, btn) => {
-        if (!$cal.find(`[data-variable=${btn.variable}]:visible`).length)
-            $(`button.markAllButton:contains(${btn.text})`).hide();
-    });
-};
-
-/*
-
+Setup saving on input change for a calendar
 */
 calQ.setupSaving = function (calendar) {
+
     const $cal = $(`#${calendar}Calendar`);
+
     //Setup every save back to JSON
     $cal.find("[class^=event-item-input-]").on('click change', (event) => {
         const $target = $(event.currentTarget);
@@ -166,7 +180,7 @@ calQ.setupSaving = function (calendar) {
 };
 
 /*
-
+Setup validation for a calendar, prevent junk data
 */
 calQ.setupValidation = function (calendar) {
     const $cal = $(`#${calendar}Calendar`);
@@ -187,7 +201,7 @@ calQ.setupValidation = function (calendar) {
 };
 
 /*
-
+Event listener for arrow nav on the calendar
 */
 calQ.arrowNavigation = function (event) {
     const arrowMap = {
@@ -208,7 +222,7 @@ calQ.arrowNavigation = function (event) {
 };
 
 /*
-
+Apply filters for replace questions logic on a calendar for specific date
 */
 calQ.applyReplaceFilter = function (calendar, date) {
     const filter = calQ.filters[calendar];
@@ -221,7 +235,7 @@ calQ.applyReplaceFilter = function (calendar, date) {
 }
 
 /*
-
+Update the calendar to a new date
 */
 calQ.setDate = function (calendar, date) {
     calQ.updateDayComplete(calendar);
