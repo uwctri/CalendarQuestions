@@ -123,17 +123,24 @@ One time insert of mark all buttons
 */
 calQ.insertMarkAllButton = function (calendar, settings) {
 
+    const $cal = $(`#${calendar}Calendar`);
+    $cal.append(calQ.template.btnGroup);
+    const $dropDown = $cal.find('.markAllButtonGroup .dropdown-menu');
+
     $.each(settings['buttons'], (_, btn) => {
 
-        // Prep the template
-        $(`#${calendar}Calendar`).append(calQ.template.btn.replace('TEXT', btn.text).replace('TOOLTIP', btn.tooltip));
+        // Insert the template button AND template link on button group
+        $cal.append(calQ.template.btn.replace('TEXT', btn.text).replace('TOOLTIP', btn.tooltip));
+        $cal.find('.markAllButtonGroup .dropdown-menu').append(calQ.template.btnLink.replace('TEXT', btn.text).replace('TOOLTIP', btn.tooltip));
 
         // Find the target and enable tooltip
-        const $target = $(`#${calendar}Calendar button`);
+        const $target = $cal.find('button');
         if (btn.tooltip) $target.last().tooltip();
 
         // Setup event listener
-        $target.last().on('click', () => calQ.calMarkAllAsValue(calendar, btn.variable, btn.value));
+        const markfunc = () => calQ.calMarkAllAsValue(calendar, btn.variable, btn.value);
+        $target.last().on('click', markfunc);
+        $dropDown.find('.dropdown-item').last().on('click', markfunc);
     });
 };
 
@@ -144,22 +151,32 @@ calQ.updateMarkAllButtons = function (calendar) {
 
     // Setup and show all buttons
     const $cal = $(`#${calendar}Calendar`);
-    $cal.parent().find("button.markAllButton").show();
+    const $dropDown = $cal.find('.markAllButtonGroup .dropdown-menu');
+    $cal.parent().find(".markAllButton").show();
+    $cal.find('.markAllButtonGroup').hide();
+    $cal.find('.markAllButtonGroup .dropdown-item').show();
     let btnCount = 0;
 
     $.each(calQ.config[calendar].buttons, (_, btn) => {
 
-        let $target = $cal.find(`button.markAllButton:contains(${btn.text})`);
+        let $target = $cal.find(`.markAllButton:contains(${btn.text})`);
+        let $ddTarget = $dropDown.find(`.dropdown-item:contains(${btn.text})`);
 
         // Hide buttons that aren't needed
         if (!$cal.find(`[data-variable=${btn.variable}]:visible`).length) {
             $target.hide();
+            $ddTarget.hide();
         } else {
             // Hacky css stuff, don't hate me
             $target.css('transform', `translateY(${-35 * btnCount}px)`);
             btnCount += 1;
         }
     });
+
+    if (btnCount > 2) { // Currently hard coded to 2 max 
+        $cal.parent().find(".markAllButton").hide();
+        $cal.find('.markAllButtonGroup').show();
+    }
 };
 
 /*

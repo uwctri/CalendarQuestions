@@ -22,4 +22,3 @@ Configuration consists of three major areas:
 
 * The calendar is not responsive and looks bad on smaller screens.
 * Technical - All dates passed in JS are currently YMD strings, this should be switched the moment objects in a future release
-* Adding too many Mark-all buttons will clutter the screen and look bad.
