@@ -55,7 +55,7 @@ Save a new value for a varaible on a date, in a speicifc calendar
 */
 calQ.jsonSaveCalendar = function (calendar, date, variable, value) {
     calQ.json[calendar][date][variable] = value;
-    calQ.updateDayComplete(calendar, date, variable);
+    calQ.updateDayComplete(calendar, false, date);
     $(`textarea[name=${calendar}]`).val(JSON.stringify(calQ.json[calendar]));
 };
 
@@ -65,13 +65,13 @@ data has been collected or not. If no date is specified then the
 currently highlighted date is used and the day is recolored to
 red or green.
 */
-calQ.updateDayComplete = function (calendar, date) {
+calQ.updateDayComplete = function (calendar, updateColor, date) {
 
-    const updateColor = !!!date;
-    date = date || $(`#${calendar}Calendar .clndr-grid .today`).children().data('date');
+    date = date || $(`#${calendar}Calendar .clndr-grid .today`).children().data('date').trim();
 
-    if (!calQ.json[calendar][date])
+    if (!calQ.json[calendar][date]) {
         return;
+    }
 
     calQ.json[calendar][date]['_complete'] = 1;
     $.each(calQ.json[calendar][date], (varName, value) => {
@@ -253,7 +253,7 @@ calQ.applyReplaceFilter = function (calendar, date) {
 Update the calendar to a new date
 */
 calQ.setDate = function (calendar, date) {
-    calQ.updateDayComplete(calendar);
+    calQ.updateDayComplete(calendar, true);
     $(".today").removeClass('today');
     $(`.calendar-day-${date}`).addClass('today');
     calQ.showDateQuestions(calendar, date);
