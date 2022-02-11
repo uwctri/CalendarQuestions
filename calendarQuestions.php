@@ -59,16 +59,20 @@ class calendarQuestions extends AbstractExternalModule
             // Grab calendar question settings
             foreach ($settings['question'][$index] as $qindex => $question) {
 
+                // Required vars
                 $variable = $settings['question-variable-name'][$index][$qindex];
                 $type = $settings['question-type'][$index][$qindex];
 
                 if (empty($variable) || empty($question) || empty($type))
                     continue;
 
+                // Grab all other config
                 $event = $settings['question-branch-event'][$index][$qindex];
                 $var = $settings['question-branch-variable'][$index][$qindex];
                 $val = $settings['question-branch-value'][$index][$qindex];
                 $replace = $settings['question-replace'][$index][$qindex];
+
+                // Check branching logic
                 $branchLogicPass = false;
                 $branchingLogicEnabled = !empty($event) && !empty($var);
 
@@ -82,6 +86,7 @@ class calendarQuestions extends AbstractExternalModule
                     }
                 }
 
+                // Save settings 
                 if (!$branchingLogicEnabled || $branchLogicPass) {
                     $calendars[$field]['questions'][$variable] = [
                         'index' => $qindex,
@@ -169,7 +174,7 @@ class calendarQuestions extends AbstractExternalModule
     }
 
     /*
-    HTML to include all libraries and template for the calendar
+    HTML to include all js libraries for the calendar
     */
     private function includeJSclndr()
     {

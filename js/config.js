@@ -1,7 +1,10 @@
 $(document).ready(function () {
+
     console.log("Loaded calendarQuestions config")
-    var $modal = $('#external-modules-configure-modal');
+    let $modal = $('#external-modules-configure-modal');
+
     $modal.on('show.bs.modal', function () {
+
         // Making sure we are overriding this modules's modal only.
         if ($(this).data('module') !== calQ.modulePrefix)
             return;
