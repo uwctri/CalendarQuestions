@@ -67,7 +67,11 @@ red or green.
 */
 calQ.updateDayComplete = function (calendar, updateColor, date) {
 
-    date = date || $(`#${calendar}Calendar .clndr-grid .today`).children().data('date').trim();
+    let $today = $(`#${calendar}Calendar .clndr-grid .today`);
+    if ( !$today.length && !date ) {
+        return;
+    }
+    date = date || $today.children().data('date').trim();
 
     if (!calQ.json[calendar][date]) {
         return;
@@ -358,9 +362,14 @@ $(document).ready(() => {
 
                 // Runs on every month change
                 onMonthChange: (firstOfMonth) => {
-                    calQ.setDate(calName, firstOfMonth.format("YYYY-MM-DD"));
-                    calQ.showDateQuestions(calName, firstOfMonth.format("YYYY-MM-DD"));
-                    calQ.loadCalendarJSON(calName, firstOfMonth.format("MM"));
+                    let firstValidDay = $cal.find(".day.event span").first();
+                    firstValidDay = moment( firstValidDay ? firstValidDay.data('date') : firstOfMonth );
+                    if ( firstOfMonth.format("MM") != firstValidDay.format("MM") ) {
+                        firstValidDay = firstOfMonth;
+                    }
+                    calQ.setDate(calName, firstValidDay.format("YYYY-MM-DD"));
+                    calQ.showDateQuestions(calName, firstValidDay.format("YYYY-MM-DD"));
+                    calQ.loadCalendarJSON(calName, firstValidDay.format("MM"));
                     calQ.setupSaving(calName);
                     calQ.setupValidation(calName);
                 }
