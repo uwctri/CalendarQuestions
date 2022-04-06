@@ -17,6 +17,9 @@ calQ.loadCalendarJSON = function (calendar, month) {
                 return;
 
             let search = `.event-item[data-date=${date}] *[data-variable=${varName}]`;
+            if ( typeof calQ.config[calendar].questions[varName] === "undefined" ) {
+                return;
+            }
             const type = calQ.config[calendar].questions[varName].type;
 
             // Enter data based on the format
