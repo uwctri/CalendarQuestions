@@ -63,14 +63,15 @@ class calendarQuestions extends AbstractExternalModule
                 $variable = $settings['question-variable-name'][$index][$qindex];
                 $type = $settings['question-type'][$index][$qindex];
 
-                if (empty($variable) || empty($question) || empty($type))
+                if (empty($variable) || empty($question) || empty($type)) {
                     continue;
+                }
 
                 // Grab all other config
                 $event = $settings['question-branch-event'][$index][$qindex];
                 $var = $settings['question-branch-variable'][$index][$qindex];
                 $val = $settings['question-branch-value'][$index][$qindex];
-                $replace = $settings['question-replace'][$index][$qindex];
+                $replace = array_filter(array_map('trim', explode(',', $settings['question-replace'][$index][$qindex])));
 
                 // Check branching logic
                 $branchLogicPass = false;
@@ -109,8 +110,9 @@ class calendarQuestions extends AbstractExternalModule
                 $endoffset = $settings['end-offset'][$index][$qindex];
 
                 // Exit if we are missing any mandatory config
-                if (empty($startVar) || empty($endEvent) || empty($endVar) || empty($startEvent))
+                if (empty($startVar) || empty($endEvent) || empty($endVar) || empty($startEvent)) {
                     continue;
+                }
 
                 // Fetch start/end values
                 $start = end(end(end(REDCap::getData($project_id, 'array', $record, $startVar, $startEvent))));

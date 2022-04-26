@@ -13,13 +13,10 @@ calQ.loadCalendarJSON = function (calendar, month) {
         $.each(vars, (varName, value) => {
 
             // Skip days outside the month
-            if (varName[0] == "_" || (moment(date).format("MM") != month))
-                return;
+            if (varName[0] == "_" || (moment(date).format("MM") != month)) return;
 
             let search = `.event-item[data-date=${date}] *[data-variable=${varName}]`;
-            if ( typeof calQ.config[calendar].questions[varName] === "undefined" ) {
-                return;
-            }
+            if (typeof calQ.config[calendar].questions[varName] === "undefined") return;
             const type = calQ.config[calendar].questions[varName].type;
 
             // Enter data based on the format
@@ -71,14 +68,10 @@ red or green.
 calQ.updateDayComplete = function (calendar, updateColor, date) {
 
     let $today = $(`#${calendar}Calendar .clndr-grid .today`);
-    if ( !$today.length && !date ) {
-        return;
-    }
+    if (!$today.length && !date) return;
     date = date || $today.children().data('date').trim();
 
-    if (!calQ.json[calendar][date]) {
-        return;
-    }
+    if (!calQ.json[calendar][date]) return;
 
     calQ.json[calendar][date]['_complete'] = 1;
     $.each(calQ.json[calendar][date], (varName, value) => {
@@ -103,8 +96,7 @@ Update the color of the day on the calendar's display for a given day
 calQ.colorDayComplete = function (calendar, date, isComplete) {
     const $cal = $(`#${calendar}Calendar`);
     $cal.find(`.calendar-day-${date}`).removeClass('day-complete day-incomplete');
-    if (calQ.config[calendar]['noFuture'] && (moment().diff(moment(date, 'YYYY-MM-DD'), 'days') <= 0))
-        return;
+    if (calQ.config[calendar]['noFuture'] && (moment().diff(moment(date, 'YYYY-MM-DD'), 'days') <= 0)) return;
     $cal.find(`.calendar-day-${date}`).addClass(isComplete == 1 ? 'day-complete' : 'day-incomplete');
 };
 
@@ -217,8 +209,9 @@ calQ.setupValidation = function (calendar) {
     $cal.find(`.event-item-input-float`).on("keypress keyup blur", (event) => {
         const $target = $(event.currentTarget);
         $target.val($target.val().replace(/[^0-9\.]/g, ""));
-        if ((event.which != 46 || $target.val().indexOf('.') != -1) && (event.which < 48 || event.which > 57))
+        if ((event.which != 46 || $target.val().indexOf('.') != -1) && (event.which < 48 || event.which > 57)) {
             event.preventDefault();
+        }
     });
 };
 
@@ -248,8 +241,7 @@ Apply filters for replace questions logic on a calendar for specific date
 */
 calQ.applyReplaceFilter = function (calendar, date) {
     const filter = calQ.filters[calendar];
-    if (!filter[date] || !filter[date].length)
-        return;
+    if (!filter[date] || !filter[date].length) return;
     const $cal = $(`#${calendar}Calendar`);
     filter[date].forEach(varName => {
         $cal.find(`[data-variable=${varName}]`).parent().hide();
@@ -276,8 +268,7 @@ $(document).ready(() => {
     $.each(calQ.config, (calName, calSettings) => {
 
         // Prep the area for the calendar
-        if ($(`[name=${calName}]:visible`).length == 0)
-            return;
+        if ($(`[name=${calName}]:visible`).length == 0) return;
         $(`#${calName}-tr td`).hide()
         $(`#${calName}-tr`).append(calQ.template.td.replace('CALNAME', `${calName}Calendar`));
 
@@ -293,8 +284,7 @@ $(document).ready(() => {
         $.each(calSettings.range, (_, rangeObj) => {
 
             // Skip if start/end ranges don't exist yet
-            if (!rangeObj.start || !rangeObj.end)
-                return;
+            if (!rangeObj.start || !rangeObj.end) return;
 
             // Loop over every day in the range
             for (let day of moment.range(rangeObj.start, rangeObj.end).by('days')) {
@@ -313,11 +303,11 @@ $(document).ready(() => {
                 $.each(calSettings.questions, (variable, question) => {
 
                     if (unique[date].includes(variable) ||
-                        (isEmpty(json[date][variable]) && rangeObj.exclude.includes(variable)))
-                        return;
+                        (isEmpty(json[date][variable]) && rangeObj.exclude.includes(variable))) return;
 
-                    if (question.replace)
+                    if (question.replace) {
                         calQ.filters[calName][date].push(question.replace);
+                    }
 
                     unique[date].push(variable);
                     json[date][variable] = json[date][variable] || "";
@@ -366,8 +356,8 @@ $(document).ready(() => {
                 // Runs on every month change
                 onMonthChange: (firstOfMonth) => {
                     let firstValidDay = $cal.find(".day.event span").first();
-                    firstValidDay = moment( firstValidDay ? firstValidDay.data('date') : firstOfMonth );
-                    if ( firstOfMonth.format("MM") != firstValidDay.format("MM") ) {
+                    firstValidDay = moment(firstValidDay ? firstValidDay.data('date') : firstOfMonth);
+                    if (firstOfMonth.format("MM") != firstValidDay.format("MM")) {
                         firstValidDay = firstOfMonth;
                     }
                     calQ.setDate(calName, firstValidDay.format("YYYY-MM-DD"));
