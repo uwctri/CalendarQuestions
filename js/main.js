@@ -305,8 +305,8 @@ $(document).ready(() => {
                     if (unique[date].includes(variable) ||
                         (isEmpty(json[date][variable]) && rangeObj.exclude.includes(variable))) return;
 
-                    if (question.replace) {
-                        calQ.filters[calName][date].push(question.replace);
+                    if (question.replace.length) {
+                        calQ.filters[calName][date].push(...question.replace);
                     }
 
                     unique[date].push(variable);
