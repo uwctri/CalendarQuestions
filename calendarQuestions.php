@@ -1,14 +1,14 @@
 <?php
 
-namespace UWMadison\calendarQuestions;
+namespace UWMadison\CalendarQuestions;
 
 use ExternalModules\AbstractExternalModule;
 use REDCap;
 
-class calendarQuestions extends AbstractExternalModule
+class CalendarQuestions extends AbstractExternalModule
 {
 
-    private $module_global = 'calQ';
+    private $jsGlobal = "";
 
     /*
     Redcap Hook, loads config page customizations
@@ -191,7 +191,15 @@ class calendarQuestions extends AbstractExternalModule
     */
     private function initGlobal()
     {
-        echo "<script>var {$this->module_global} = {'modulePrefix': '{$this->getPrefix()}'};</script>";
+        // Setup Redcap JS object
+        $this->initializeJavascriptModuleObject();
+        $this->tt_transferToJavascriptModuleObject();
+        $this->jsGlobal = $this->getJavascriptModuleObjectName();
+        $data = ["prefix" => $this->getPrefix()];
+
+        // Pass down to JS
+        $data = json_encode($data);
+        echo "<script>Object.assign({$this->jsGlobal}, {$data});</script>";
     }
 
     /*
@@ -199,7 +207,7 @@ class calendarQuestions extends AbstractExternalModule
     */
     private function passArgument($name, $value)
     {
-        echo "<script>{$this->module_global}.{$name} = " . json_encode($value) . ";</script>";
+        echo "<script>{$this->jsGlobal}.{$name} = " . json_encode($value) . ";</script>";
     }
 
     /*

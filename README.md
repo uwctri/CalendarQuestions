@@ -6,7 +6,7 @@ Calendar Questions allows you to capture simple  questions in a nice-looking cal
 
 ## Installing
 
-You can install the module from the REDCap EM repo or drop it directly in your modules folder (i.e. `redcap/modules/calendarQuestionsv1.0.0`).
+You can install the module from the REDCap EM repo or drop it directly in your modules folder (i.e. `redcap/modules/calendar_questions_v1.0.0`).
 
 ## Configuration
 

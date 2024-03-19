@@ -1,7 +1,7 @@
 {
     "name": "Calendar Questions",
     "description": "Ask simple questions in a calendar format with specified date ranges and branching logic",
-    "namespace": "UWMadison\\calendarQuestions",
+    "namespace": "UWMadison\\CalendarQuestions",
     "authors": [
         {
             "name": "Adam Nunez",
