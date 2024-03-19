@@ -10,22 +10,26 @@
   box-shadow: 0px 4px 0 #343434;
   position: relative;
 }
+
 .clndr .clndr-controls {
   padding: 14px;
   background-color: #414141;
   color: white;
   text-align: center;
 }
+
 .clndr .clndr-controls .clndr-previous-button {
   float: left;
   text-align: left;
   font-size: 20px;
 }
+
 .clndr .clndr-controls .clndr-next-button {
   float: right;
   text-align: right;
   font-size: 20px;
 }
+
 .clndr .clndr-controls .clndr-previous-button,
 .clndr .clndr-controls .clndr-next-button {
   width: 30px;
@@ -37,19 +41,23 @@
   -ms-user-select: none;
   /* IE10+ */
 }
+
 .clndr .clndr-controls .clndr-previous-button:hover,
 .clndr .clndr-controls .clndr-next-button:hover {
   opacity: 0.5;
 }
+
 .clndr .clndr-grid {
   float: left;
   width: 65%;
   border-right: 2px solid white;
 }
+
 .clndr .clndr-grid .days-of-the-week {
   width: 100%;
   background-color: #3883a3;
 }
+
 .clndr .clndr-grid .days-of-the-week .header-day {
   float: left;
   width: 14.2857%;
@@ -57,9 +65,11 @@
   text-align: center;
   color: white;
 }
+
 .clndr .clndr-grid .days {
   width: 100%;
 }
+
 .clndr .clndr-grid .days .day,
 .clndr .clndr-grid .days .empty {
   float: left;
@@ -74,29 +84,36 @@
   background-size: cover;
   background-position: center;
 }
+
 .clndr .clndr-grid .days .day.event .day-number,
 .clndr .clndr-grid .days .empty.event .day-number {
   padding-bottom: 4px;
   border-bottom: 3px solid #3883a3;
 }
-.clndr .clndr-grid .days .day.event.day-complete .day-number{
-    border-bottom: 3px solid #52CC00 !important;
+
+.clndr .clndr-grid .days .day.event.day-complete .day-number {
+  border-bottom: 3px solid #52CC00 !important;
 }
-.clndr .clndr-grid .days .day.event.day-incomplete .day-number{
-    border-bottom: 3px solid red !important;
+
+.clndr .clndr-grid .days .day.event.day-incomplete .day-number {
+  border-bottom: 3px solid red !important;
 }
+
 .clndr .clndr-grid .days .day.adjacent-month .day-number,
 .clndr .clndr-grid .days .empty.adjacent-month .day-number {
   opacity: 0.3;
 }
+
 .clndr .clndr-grid .days .today {
   background-color: white;
   background-image: none;
 }
+
 .clndr .event-listing {
   float: left;
   width: 35%;
 }
+
 .clndr .event-listing .event-listing-title {
   padding: 14px;
   background-color: #71bbd2;
@@ -104,31 +121,40 @@
   color: white;
   letter-spacing: 1px;
 }
+
 .clndr .event-listing .event-item {
   padding: 14px 14px 0px 14px;
   color: #4f4f4f;
 }
+
 .clndr .event-listing .event-item-question {
   font-weight: 400;
 }
+
 .clndr .event-listing .event-item-input-text {
-    width: 100%;
+  width: 100%;
 }
+
 .clndr .event-listing .event-item-input-int {
-    width: 100%;
+  width: 100%;
 }
+
 .clndr .event-listing .event-item-input-float {
-    width: 100%;
+  width: 100%;
 }
+
 .clndr .event-listing .event-item-input-yesno {
-    margin-right: 2px;
+  margin-right: 2px;
 }
+
 .clndr .event-listing .event-item-input-checkbox {
-    margin-right: 4px;
+  margin-right: 4px;
 }
+
 .clndr .event-listing .event-item-input-label {
-    margin-right: 8px;
+  margin-right: 8px;
 }
+
 .clndr .clndr-controls .month {
   width: 70%;
   padding-top: 5px;
@@ -139,6 +165,7 @@
   font-weight: 700;
   letter-spacing: 1px;
 }
+
 .clndr .markAllButton,
 .clndr .markAllButtonGroup {
   position: absolute;
@@ -146,64 +173,81 @@
   right: 0px;
   margin-left: 5px;
 }
+
 .clndr .dropdown-item {
-  text-decoration: none!important;
+  text-decoration: none !important;
   color: #000066;
 
 
 }
+
 .clndr textarea {
-    height: 2em;
+  height: 2em;
 }
+
 /***************/
 /* Config Page */
 /***************/
 .calQConfig thead {
-    display: none;
+  display: none;
 }
+
 .calQConfig .external-modules-instance-label {
-    display: none;
+  display: none;
 }
+
 .calQConfig tr[field=question-branch-variable] label {
-    display: none;
+  display: none;
 }
+
 .calQConfig tr[field=question-branch-value] label {
-    display: none;
+  display: none;
 }
+
 .calQConfig tr[field=question-branch-variable] td {
-    border: none;
-    padding-top: 0.15rem;
-    padding-bottom: 0.15rem;
+  border: none;
+  padding-top: 0.15rem;
+  padding-bottom: 0.15rem;
 }
+
 .calQConfig tr[field=question-branch-value] td {
-    border: none;
-    padding-top: 0.15rem;
+  border-top: none;
+  padding-top: 0.15rem;
 }
+
 .calQConfig tr[field=question-branch-event] td {
-    padding-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
 }
+
 .calQConfig tr[field=question-branch-value] .external-modules-input-td input {
-    width: 94%;
+  width: 94%;
 }
+
 .calQConfig tr[field=start-variable] label {
-    display: none;
+  display: none;
 }
+
 .calQConfig tr[field=end-variable] label {
-    display: none;
+  display: none;
 }
+
 .calQConfig tr[field=start-event] td {
-    border-bottom: none;
-    padding-bottom: 0.15rem;
+  border-bottom: none;
+  padding-bottom: 0.15rem;
 }
+
 .calQConfig tr[field=end-event] td {
-    border-bottom: none;
-    padding-bottom: 0.15rem;
+  border-bottom: none;
+  padding-bottom: 0.15rem;
 }
+
 .calQConfig tr[field=start-variable] td {
-    border-top: none;
-    padding-top: 0.15rem;
+  border-top: none;
+  padding-top: 0.15rem;
 }
+
 .calQConfig tr[field=end-variable] td {
-    border-top: none;
-    padding-top: 0.15rem;
+  border-top: none;
+  padding-top: 0.15rem;
 }
