@@ -20,6 +20,17 @@ class CalendarQuestions extends AbstractExternalModule
         if ($this->isPage('ExternalModules/manager/project.php') && $project_id) {
             $this->initGlobal();
             $this->includeCSS();
+
+            // Grab valid notes fields
+            $notesFields = [];
+            $dd_array = REDCap::getDataDictionary('array');
+            foreach ($dd_array as $field_name => $field_attributes) {
+                if ($field_attributes['field_type'] == "notes") {
+                    $notesFields[] = $field_name;
+                }
+            }
+            $this->passArgument("notesFields", $notesFields);
+
             $this->includeJs('config.js');
         }
     }
@@ -176,6 +187,24 @@ class CalendarQuestions extends AbstractExternalModule
     }
 
     /*
+    Init our JS module global and populate with the prefix
+    */
+    private function initGlobal()
+    {
+        // Setup Redcap JS object
+        $this->initializeJavascriptModuleObject();
+        $this->tt_transferToJavascriptModuleObject();
+        $this->jsGlobal = $this->getJavascriptModuleObjectName();
+        $data = [
+            "prefix" => $this->getPrefix()
+        ];
+
+        // Pass down to JS
+        $data = json_encode($data);
+        echo "<script>Object.assign({$this->jsGlobal}, {$data});</script>";
+    }
+
+    /*
     HTML to include all js libraries for the calendar
     */
     private function includeJSclndr()
@@ -184,22 +213,6 @@ class CalendarQuestions extends AbstractExternalModule
         echo "<script src={$this->getUrl('js/moment.min.js')}></script>";
         echo "<script src={$this->getUrl('js/moment-range.min.js')}></script>";
         echo "<script src={$this->getUrl('js/clndr.min.js')}></script>";
-    }
-
-    /*
-    HTML to init our JS module global and populate with the prefix
-    */
-    private function initGlobal()
-    {
-        // Setup Redcap JS object
-        $this->initializeJavascriptModuleObject();
-        $this->tt_transferToJavascriptModuleObject();
-        $this->jsGlobal = $this->getJavascriptModuleObjectName();
-        $data = ["prefix" => $this->getPrefix()];
-
-        // Pass down to JS
-        $data = json_encode($data);
-        echo "<script>Object.assign({$this->jsGlobal}, {$data});</script>";
     }
 
     /*

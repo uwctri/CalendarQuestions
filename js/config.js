@@ -2,12 +2,12 @@ $(document).ready(function () {
 
     console.log("Loaded CalendarQuestions config")
     let $modal = $('#external-modules-configure-modal');
-    const prefix = ExternalModules.UWMadison.CalendarQuestions.prefix
+    let module = ExternalModules.UWMadison.CalendarQuestions;
 
     $modal.on('show.bs.modal', function () {
 
         // Making sure we are overriding this modules's modal only.
-        if ($(this).data('module') !== prefix)
+        if ($(this).data('module') !== module.prefix)
             return;
 
         if (typeof ExternalModules.Settings.prototype.resetConfigInstancesOld === 'undefined')
@@ -16,7 +16,7 @@ $(document).ready(function () {
         ExternalModules.Settings.prototype.resetConfigInstances = function () {
             ExternalModules.Settings.prototype.resetConfigInstancesOld();
 
-            if ($modal.data('module') !== prefix)
+            if ($modal.data('module') !== module.prefix)
                 return;
 
             $modal.addClass('calQConfig');
@@ -30,12 +30,20 @@ $(document).ready(function () {
                     $(this).click();
             });
 
+            // Remove all options except for the notes fields
+            $("select[name^=name____] option").each((_, el) => {
+                let field_name = $(el).val();
+                if (field_name != "" && !module.notesFields.includes(field_name)) {
+                    $(el).remove();
+                }
+            })
+
         };
     });
 
     $modal.on('hide.bs.modal', function () {
         // Making sure we are overriding this modules's modal only.
-        if ($(this).data('module') !== prefix)
+        if ($(this).data('module') !== module.prefix)
             return;
 
         $(this).removeClass('calQConfig');
