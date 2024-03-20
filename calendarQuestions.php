@@ -18,19 +18,8 @@ class CalendarQuestions extends AbstractExternalModule
 
         // Custom Config page
         if ($this->isPage('ExternalModules/manager/project.php') && $project_id) {
-            $this->initGlobal();
+            $this->loadSettings([], true);
             $this->includeCSS();
-
-            // Grab valid notes fields
-            $notesFields = [];
-            $dd_array = REDCap::getDataDictionary('array');
-            foreach ($dd_array as $field_name => $field_attributes) {
-                if ($field_attributes['field_type'] == "notes") {
-                    $notesFields[] = $field_name;
-                }
-            }
-            $this->passArgument("notesFields", $notesFields);
-
             $this->includeJs('config.js');
         }
     }
@@ -177,9 +166,10 @@ class CalendarQuestions extends AbstractExternalModule
         if (!empty($calendars)) {
             $template = file_get_contents(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'template.html');
             $template = array_combine(["td", "btn", "btnLink", "btnGroup", "calendar"], explode("##", $template));
-            $this->initGlobal();
-            $this->passArgument('template', $template);
-            $this->passArgument('config', $calendars);
+            $this->loadSettings([
+                "template" => $template,
+                "config" => $calendars
+            ]);
             $this->includeJSclndr();
             $this->includeCSS();
             $this->includeJs('main.js');
@@ -189,15 +179,48 @@ class CalendarQuestions extends AbstractExternalModule
     /*
     Init our JS module global and populate with the prefix
     */
-    private function initGlobal()
+    private function loadSettings($data = [], $loadFieldInfo = false)
     {
         // Setup Redcap JS object
         $this->initializeJavascriptModuleObject();
         $this->tt_transferToJavascriptModuleObject();
         $this->jsGlobal = $this->getJavascriptModuleObjectName();
-        $data = [
+        $data = array_merge($data, [
             "prefix" => $this->getPrefix()
-        ];
+        ]);
+
+        if ($loadFieldInfo) {
+            // Grab valid notes fields
+            $notes_fields = [];
+            $dd = REDCap::getDataDictionary('array');
+            foreach ($dd as $field_name => $field_attributes) {
+                if ($field_attributes['field_type'] == "notes") {
+                    $notes_fields[] = $field_name;
+                }
+            }
+
+            // Grab existing data for metrics on notes fields
+            $used_fields = array_filter($this->getProjectSetting('name') ?? []);
+            $structured = [];
+            if (!empty($used_fields)) {
+                $used_notes = array_intersect($used_fields, $notes_fields);
+                $rcdata = REDCap::getData('array', NULL, $used_notes);
+                foreach ($rcdata as $record => $events) {
+                    foreach ($events as $event => $fields) {
+                        foreach ($fields as $field => $value) {
+                            $structured[$field]["str $record"] = strlen($value) / (2 << 15);
+                        }
+                        continue;
+                    }
+                }
+            }
+
+            // Merge data
+            $data = array_merge($data, [
+                "notesFields" => $notes_fields,
+                "metrics" => $structured,
+            ]);
+        }
 
         // Pass down to JS
         $data = json_encode($data);
@@ -213,14 +236,6 @@ class CalendarQuestions extends AbstractExternalModule
         echo "<script src={$this->getUrl('js/moment.min.js')}></script>";
         echo "<script src={$this->getUrl('js/moment-range.min.js')}></script>";
         echo "<script src={$this->getUrl('js/clndr.min.js')}></script>";
-    }
-
-    /*
-    HTML to pass down additional data to the JS global
-    */
-    private function passArgument($name, $value)
-    {
-        echo "<script>{$this->jsGlobal}.{$name} = " . json_encode($value) . ";</script>";
     }
 
     /*

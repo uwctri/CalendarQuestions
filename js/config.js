@@ -4,6 +4,12 @@ $(document).ready(function () {
     let $modal = $('#external-modules-configure-modal');
     let module = ExternalModules.UWMadison.CalendarQuestions;
 
+    Object.keys(module.metrics).forEach(field => {
+        module.metrics[field] = Object.entries(module.metrics[field])
+            .sort(([, a], [, b]) => b - a)
+            .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
+    });
+
     $modal.on('show.bs.modal', function () {
 
         // Making sure we are overriding this modules's modal only.
@@ -33,10 +39,31 @@ $(document).ready(function () {
             // Remove all options except for the notes fields
             $("select[name^=name____] option").each((_, el) => {
                 let field_name = $(el).val();
-                if (field_name != "" && !module.notesFields.includes(field_name)) {
+                if (field_name != "" && !module.notesFields.includes(field_name))
                     $(el).remove();
-                }
-            })
+            });
+
+            // // Add metrics to the target field row
+            $("tr[field=name").each((_, el) => {
+                let field_name = $(el).find("select").val();
+                let metrics = module.metrics[field_name] ?? {};
+                metrics = Object.entries(metrics).slice(0, 5);
+                if (metrics.length == 0)
+                    return;
+
+                // Create a simple html table with the metrics
+                let table = $("<table>").addClass("table table-sm table-borderless");
+                metrics.forEach(([record, perc]) => {
+                    record = record.replace("str ", "");
+                    perc = (perc * 100).toFixed(2) + "%";
+                    let row = $("<tr>").append($("<td>").text(record)).append($("<td>").text(perc));
+                    table.append(row);
+                });
+
+                // Append the table in a row after the current
+                $(el).find("div").after(table).after("<br><div>The below records contain the most data for the selected field</div>");
+
+            });
 
         };
     });
