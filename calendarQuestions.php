@@ -208,9 +208,10 @@ class CalendarQuestions extends AbstractExternalModule
                 foreach ($rcdata as $record => $events) {
                     foreach ($events as $event => $fields) {
                         foreach ($fields as $field => $value) {
-                            $structured[$field]["str $record"] = strlen($value) / (2 << 15);
+                            $a = $structured[$field]["str $record"] ?? 0;
+                            $b = strlen($value) / (2 << 15);
+                            $structured[$field]["str $record"] = $a > $b ? $a : $b;
                         }
-                        continue;
                     }
                 }
             }
