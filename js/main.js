@@ -71,7 +71,7 @@ $(document).ready(() => {
     const updateDayComplete = (calendar, updateColor, ymd) => {
 
         let $today = $(`#${calendar}Calendar .clndr-grid .today`);
-        if (!$today.length && !date) return;
+        if (!$today.length && !ymd) return;
         ymd = ymd || $today.children().data('date').trim();
 
         if (!json[calendar][ymd]) return;
