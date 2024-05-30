@@ -16,6 +16,7 @@ $(document).ready(() => {
             $.each(vars, (varName, value) => {
 
                 // Skip days outside the month
+                console.log(json)
                 if (varName[0] == "_" || (moment(date).format("MM") != month)) return;
 
                 let search = `.event-item[data-date=${date}] *[data-variable=${varName}]`;
@@ -273,9 +274,9 @@ $(document).ready(() => {
         $(`#${calName}-tr td`).hide()
         $(`#${calName}-tr`).append(module.template.td.replace('CALNAME', `${calName}Calendar`));
 
-        // Load JSON from the text area
-        let json = $(`textarea[name=${calName}]`).val();
-        json = isEmpty(json) ? {} : JSON.parse(json);
+        // Load JSON from the text area into temp Json var
+        let tmp = $(`textarea[name=${calName}]`).val();
+        tmp = isEmpty(tmp) ? {} : JSON.parse(tmp);
 
         let events = [];
         let unique = {};
@@ -295,23 +296,23 @@ $(document).ready(() => {
                 unique[date] = unique[date] || [];
 
                 // Init Json structure
-                if (json[date] === undefined) {
-                    json[date] = {};
-                    json[date]["_complete"] = 0;
+                if (tmp[date] === undefined) {
+                    tmp[date] = {};
+                    tmp[date]["_complete"] = 0;
                 }
 
                 // Flip through all the questions for today
                 $.each(calSettings.questions, (variable, question) => {
 
                     if (unique[date].includes(variable) ||
-                        (isEmpty(json[date][variable]) && rangeObj.exclude.includes(variable))) return;
+                        (isEmpty(tmp[date][variable]) && rangeObj.exclude.includes(variable))) return;
 
                     if (question.replace.length) {
                         filters[calName][date].push(...question.replace);
                     }
 
                     unique[date].push(variable);
-                    json[date][variable] = json[date][variable] || "";
+                    tmp[date][variable] = tmp[date][variable] || "";
                     events.push({
                         index: question.index,
                         date: date,
@@ -325,7 +326,7 @@ $(document).ready(() => {
 
         // Sort by question index for consistent display
         events.sort((a, b) => (b.index < a.index) ? 1 : -1);
-        json[calName] = json;
+        json[calName] = tmp;
 
         // Init the CLNDR
         let $cal = $(`#${calName}Calendar`);

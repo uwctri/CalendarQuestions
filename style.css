@@ -177,8 +177,6 @@
 .clndr .dropdown-item {
   text-decoration: none !important;
   color: #000066;
-
-
 }
 
 .clndr textarea {
@@ -250,6 +248,10 @@
 .calQConfig tr[field=end-variable] td {
   border-top: none;
   padding-top: 0.15rem;
+}
+
+.calQConfig .sub_start td {
+  background-color: #e6e6e6;
 }
 
 .calQMetrics {

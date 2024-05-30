@@ -7,9 +7,6 @@ use REDCap;
 
 class CalendarQuestions extends AbstractExternalModule
 {
-
-    private $jsGlobal = "";
-
     /*
     Redcap Hook, loads config page customizations
     */
@@ -184,7 +181,6 @@ class CalendarQuestions extends AbstractExternalModule
         // Setup Redcap JS object
         $this->initializeJavascriptModuleObject();
         $this->tt_transferToJavascriptModuleObject();
-        $this->jsGlobal = $this->getJavascriptModuleObjectName();
         $data = array_merge($data, [
             "prefix" => $this->getPrefix()
         ]);
@@ -225,7 +221,7 @@ class CalendarQuestions extends AbstractExternalModule
 
         // Pass down to JS
         $data = json_encode($data);
-        echo "<script>Object.assign({$this->jsGlobal}, {$data});</script>";
+        echo "<script>Object.assign({$this->getJavascriptModuleObjectName()}, {$data});</script>";
     }
 
     /*
