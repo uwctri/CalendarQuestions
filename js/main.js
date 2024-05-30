@@ -16,7 +16,6 @@ $(document).ready(() => {
             $.each(vars, (varName, value) => {
 
                 // Skip days outside the month
-                console.log(json)
                 if (varName[0] == "_" || (moment(date).format("MM") != month)) return;
 
                 let search = `.event-item[data-date=${date}] *[data-variable=${varName}]`;
@@ -43,23 +42,23 @@ $(document).ready(() => {
     /*
     Show the daily questions for a calendar on a date
     */
-    const showDateQuestions = (calendar, date) => {
-        const mDate = moment(date);
+    const showDateQuestions = (calendar, ymd) => {
+        const date = moment(ymd);
         const $cal = $(`#${calendar}Calendar`);
         $cal.find(`.event-item`).hide();
-        if (!module.config[calendar]['noFuture'] || (moment().diff(mDate, 'days') > 0)) {
-            $cal.find(`.event-item[data-date=${mDate.format('YYYY-MM-DD')}]`).show();
+        if (!module.config[calendar]['noFuture'] || (moment().diff(date, 'days') > 0)) {
+            $cal.find(`.event-item[data-date=${date.format('YYYY-MM-DD')}]`).show();
         }
-        applyReplaceFilter(calendar, date);
+        applyReplaceFilter(calendar, ymd);
         updateMarkAllButtons(calendar);
     };
 
     /*
     Save a new value for a varaible on a date, in a speicifc calendar 
     */
-    const jsonSaveCalendar = (calendar, date, variable, value) => {
-        json[calendar][date][variable] = value;
-        updateDayComplete(calendar, false, date);
+    const jsonSaveCalendar = (calendar, ymd, variable, value) => {
+        json[calendar][ymd][variable] = value;
+        updateDayComplete(calendar, false, ymd);
         $(`textarea[name=${calendar}]`).val(JSON.stringify(json[calendar]));
     };
 
@@ -69,26 +68,26 @@ $(document).ready(() => {
     currently highlighted date is used and the day is recolored to
     red or green.
     */
-    const updateDayComplete = (calendar, updateColor, date) => {
+    const updateDayComplete = (calendar, updateColor, ymd) => {
 
         let $today = $(`#${calendar}Calendar .clndr-grid .today`);
         if (!$today.length && !date) return;
-        date = date || $today.children().data('date').trim();
+        ymd = ymd || $today.children().data('date').trim();
 
-        if (!json[calendar][date]) return;
+        if (!json[calendar][ymd]) return;
 
-        json[calendar][date]['_complete'] = 1;
-        $.each(json[calendar][date], (varName, value) => {
+        json[calendar][ymd]['_complete'] = 1;
+        $.each(json[calendar][ymd], (varName, value) => {
             if (value !== undefined && varName != "_complete" &&
                 module.config[calendar].questions[varName].type != 'check' &&
                 value.toString() == "") {
-                json[calendar][date]['_complete'] = 0;
+                json[calendar][ymd]['_complete'] = 0;
                 return false;
             }
         });
 
         if (updateColor) {
-            colorDayComplete(calendar, date, json[calendar][date]['_complete']);
+            colorDayComplete(calendar, ymd, json[calendar][ymd]['_complete']);
         }
 
         $(`textarea[name=${calendar}]`).val(JSON.stringify(json[calendar]));
@@ -97,11 +96,11 @@ $(document).ready(() => {
     /*
     Update the color of the day on the calendar's display for a given day
     */
-    const colorDayComplete = (calendar, date, isComplete) => {
+    const colorDayComplete = (calendar, ymd, isComplete) => {
         const $cal = $(`#${calendar}Calendar`);
-        $cal.find(`.calendar-day-${date}`).removeClass('day-complete day-incomplete');
-        if (module.config[calendar]['noFuture'] && (moment().diff(moment(date, 'YYYY-MM-DD'), 'days') <= 0)) return;
-        $cal.find(`.calendar-day-${date}`).addClass(isComplete == 1 ? 'day-complete' : 'day-incomplete');
+        $cal.find(`.calendar-day-${ymd}`).removeClass('day-complete day-incomplete');
+        if (module.config[calendar]['noFuture'] && (moment().diff(moment(ymd, 'YYYY-MM-DD'), 'days') <= 0)) return;
+        $cal.find(`.calendar-day-${ymd}`).addClass(isComplete == 1 ? 'day-complete' : 'day-incomplete');
     };
 
     /*
@@ -243,11 +242,11 @@ $(document).ready(() => {
     /*
     Apply filters for replace questions logic on a calendar for specific date
     */
-    const applyReplaceFilter = (calendar, date) => {
+    const applyReplaceFilter = (calendar, ymd) => {
         const filter = filters[calendar];
-        if (!filter[date] || !filter[date].length) return;
+        if (!filter[ymd] || !filter[ymd].length) return;
         const $cal = $(`#${calendar}Calendar`);
-        filter[date].forEach(varName => {
+        filter[ymd].forEach(varName => {
             $cal.find(`[data-variable=${varName}]`).parent().hide();
         });
     };
@@ -255,11 +254,11 @@ $(document).ready(() => {
     /*
     Update the calendar to a new date
     */
-    const setDate = (calendar, date) => {
+    const setDate = (calendar, ymd) => {
         updateDayComplete(calendar, true);
         $(".today").removeClass('today');
-        $(`.calendar-day-${date}`).addClass('today');
-        showDateQuestions(calendar, date);
+        $(`.calendar-day-${ymd}`).addClass('today');
+        showDateQuestions(calendar, ymd);
     };
 
     // Simple setup
