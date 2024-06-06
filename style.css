@@ -95,6 +95,10 @@
   border-bottom: 3px solid #52CC00 !important;
 }
 
+.clndr .clndr-grid .days .day.event.day-partial .day-number {
+  border-bottom: 3px solid yellow !important;
+}
+
 .clndr .clndr-grid .days .day.event.day-incomplete .day-number {
   border-bottom: 3px solid red !important;
 }
@@ -184,6 +188,14 @@
 }
 
 /***************/
+/* Stats Row   */
+/***************/
+
+.clndr-stats td {
+  background-color: #f0f0f0;
+}
+
+/***************/
 /* Config Page */
 /***************/
 .calQConfig thead {
@@ -250,7 +262,7 @@
   padding-top: 0.15rem;
 }
 
-.calQConfig .sub_start td {
+.calQConfig tr[field=calendar-config] td {
   background-color: #e6e6e6;
 }
 

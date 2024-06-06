@@ -54,7 +54,7 @@ $(document).ready(() => {
     };
 
     /*
-    Save a new value for a varaible on a date, in a speicifc calendar 
+    Save a new value for a varaible on a date, in a specific calendar 
     */
     const jsonSaveCalendar = (calendar, ymd, variable, value) => {
         json[calendar][ymd][variable] = value;
@@ -77,6 +77,7 @@ $(document).ready(() => {
         if (!json[calendar][ymd]) return;
 
         json[calendar][ymd]['_complete'] = 1;
+        updateStats(calendar, ymd);
         $.each(json[calendar][ymd], (varName, value) => {
             if (value !== undefined && varName != "_complete" &&
                 module.config[calendar].questions[varName].type != 'check' &&
@@ -86,9 +87,8 @@ $(document).ready(() => {
             }
         });
 
-        if (updateColor) {
+        if (updateColor)
             colorDayComplete(calendar, ymd, json[calendar][ymd]['_complete']);
-        }
 
         $(`textarea[name=${calendar}]`).val(JSON.stringify(json[calendar]));
     };
@@ -261,6 +261,47 @@ $(document).ready(() => {
         showDateQuestions(calendar, ymd);
     };
 
+    const updateStats = (calendar, ymd) => {
+        if (!module.config[calendar].stats) return;
+        const $t = $(`#${calendar}-tr`).next().find("table");
+        const data = json[calendar];
+        const start = moment(ymd, 'YYYY-MM-DD').startOf('month').subtract(11, 'month');
+        const end = moment(ymd, 'YYYY-MM-DD').endOf('month');
+        const thisMonth = moment(ymd, 'YYYY-MM-DD').startOf('month').format('YYYY-MM-DD');
+        const thisTrimester = moment(ymd, 'YYYY-MM-DD').subtract(90, 'day').format('YYYY-MM-DD');
+        let totals = {
+            month: 0,
+            trimester: 0,
+            year: 0,
+            month_complete: 0,
+            trimester_complete: 0,
+            year_complete: 0
+        };
+        for (let date of moment.range(start, end).by('days')) {
+            date = date.format('YYYY-MM-DD');
+            if (data[date]) {
+                totals.year += 1;
+                if (date >= thisMonth)
+                    totals.month += 1;
+                if (date >= thisTrimester)
+                    totals.trimester += 1;
+            }
+            if (data[date] && data[date]._complete == 1) {
+                totals.year_complete += 1;
+                if (date >= thisMonth)
+                    totals.month_complete += 1;
+                if (date >= thisTrimester)
+                    totals.trimester_complete += 1;
+            }
+        }
+        $t.find(".a1").text("");
+        $t.find(".a2").text("");
+        $t.find(".a3").text("");
+        $t.find(".b1").text(`${totals.month_complete} / ${totals.month}`);
+        $t.find(".b2").text(`${totals.trimester_complete} / ${totals.trimester}`);
+        $t.find(".b3").text(`${totals.year_complete} / ${totals.year}`);
+    };
+
     // Simple setup
     document.onkeydown = arrowNavigation;
     window['moment-range'].extendMoment(moment);
@@ -272,6 +313,10 @@ $(document).ready(() => {
         if ($(`[name=${calName}]:visible`).length == 0) return;
         $(`#${calName}-tr td`).hide()
         $(`#${calName}-tr`).append(module.template.td.replace('CALNAME', `${calName}Calendar`));
+
+        // Insert stats row
+        if (calSettings.stats)
+            $(`#${calName}-tr`).after(module.template.stats);
 
         // Load JSON from the text area into temp Json var
         let tmp = $(`textarea[name=${calName}]`).val();
@@ -342,6 +387,7 @@ $(document).ready(() => {
                 loadCalendarJSON(calName, moment().format("MM"));
                 setupSaving(calName);
                 setupValidation(calName);
+                updateStats(calName, moment().format("YYYY-MM-DD"));
             },
 
             clickEvents: {
@@ -366,6 +412,7 @@ $(document).ready(() => {
                     loadCalendarJSON(calName, firstValidDay.format("MM"));
                     setupSaving(calName);
                     setupValidation(calName);
+                    updateStats(calName, firstValidDay.format("YYYY-MM-DD"));
                 }
             }
         });

@@ -45,6 +45,9 @@ $(document).ready(function () {
 
             // // Add metrics to the target field row
             $("tr[field=name").each((_, el) => {
+                if ($(el).find(".table-em-stats").length)
+                    return;
+
                 let field_name = $(el).find("select").val();
                 let metrics = module.metrics[field_name] ?? {};
                 metrics = Object.entries(metrics).slice(0, 5);
@@ -52,7 +55,7 @@ $(document).ready(function () {
                     return;
 
                 // Create a simple html table with the metrics
-                let table = $("<table>").addClass("table table-sm table-borderless");
+                let table = $("<table>").addClass("table table-sm table-borderless table-em-stats");
                 metrics.forEach(([record, perc]) => {
                     record = record.replace("str ", "");
                     perc = (perc * 100).toFixed(2) + "%";

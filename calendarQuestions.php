@@ -12,7 +12,6 @@ class CalendarQuestions extends AbstractExternalModule
     */
     public function redcap_every_page_top($project_id)
     {
-
         // Custom Config page
         if ($this->isPage('ExternalModules/manager/project.php') && $project_id) {
             $this->loadSettings([], true);
@@ -48,6 +47,7 @@ class CalendarQuestions extends AbstractExternalModule
             $calendars[$field] = [
                 'json' => $json,
                 'noFuture' => $settings['nofuture'][$index],
+                'stats' => $settings['stats'][$index],
                 'questions' => [],
                 'range' => [],
                 'buttons' => []
@@ -162,7 +162,7 @@ class CalendarQuestions extends AbstractExternalModule
 
         if (!empty($calendars)) {
             $template = file_get_contents(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'template.html');
-            $template = array_combine(["td", "btn", "btnLink", "btnGroup", "calendar"], explode("##", $template));
+            $template = array_combine(["td", "btn", "btnLink", "btnGroup", "calendar", "stats"], explode("##", $template));
             $this->loadSettings([
                 "template" => $template,
                 "config" => $calendars

@@ -29,6 +29,11 @@
                     "type": "checkbox"
                 },
                 {
+                    "key": "stats",
+                    "name": "<b>Show Calendar Stats</b><br>Show data entry stats under the calendar",
+                    "type": "checkbox"
+                },
+                {
                     "key": "calendar-questions",
                     "name": "<b>Questions</b>",
                     "type": "sub_settings",
