@@ -34,7 +34,7 @@ $(document).ready(() => {
                 }
             });
 
-            colorDayComplete(calendar, date, vars['_complete']);
+            colorDay(calendar, date, vars);
 
         });
     };
@@ -76,19 +76,25 @@ $(document).ready(() => {
 
         if (!json[calendar][ymd]) return;
 
+        const start_complete = json[calendar][ymd]['_complete'];
+        const start_partial = json[calendar][ymd]['_partial'];
+
         json[calendar][ymd]['_complete'] = 1;
-        updateStats(calendar, ymd);
         $.each(json[calendar][ymd], (varName, value) => {
-            if (value !== undefined && varName != "_complete" &&
-                module.config[calendar].questions[varName].type != 'check' &&
-                value.toString() == "") {
-                json[calendar][ymd]['_complete'] = 0;
-                return false;
+            if (value !== undefined && varName[0] != "_" &&
+                module.config[calendar].questions[varName].type != 'check') {
+                if (value.toString() == "")
+                    json[calendar][ymd]['_complete'] = 0;
+                else
+                    json[calendar][ymd]['_partial'] = 1;
             }
         });
 
+        if (start_complete != json[calendar][ymd]['_complete'] || start_partial != json[calendar][ymd]['_partial'])
+            updateStats(calendar, ymd);
+
         if (updateColor)
-            colorDayComplete(calendar, ymd, json[calendar][ymd]['_complete']);
+            colorDay(calendar, ymd, json[calendar][ymd]);
 
         $(`textarea[name=${calendar}]`).val(JSON.stringify(json[calendar]));
     };
@@ -96,11 +102,12 @@ $(document).ready(() => {
     /*
     Update the color of the day on the calendar's display for a given day
     */
-    const colorDayComplete = (calendar, ymd, isComplete) => {
+    const colorDay = (calendar, ymd, data) => {
+        const newClass = data['_complete'] ? 'day-complete' : data['_partial'] ? 'day-partial' : 'day-incomplete';
         const $cal = $(`#${calendar}Calendar`);
-        $cal.find(`.calendar-day-${ymd}`).removeClass('day-complete day-incomplete');
+        $cal.find(`.calendar-day-${ymd}`).removeClass('day-complete day-incomplete day-partial');
         if (module.config[calendar]['noFuture'] && (moment().diff(moment(ymd, 'YYYY-MM-DD'), 'days') <= 0)) return;
-        $cal.find(`.calendar-day-${ymd}`).addClass(isComplete == 1 ? 'day-complete' : 'day-incomplete');
+        $cal.find(`.calendar-day-${ymd}`).addClass(newClass);
     };
 
     /*
@@ -273,30 +280,40 @@ $(document).ready(() => {
             month: 0,
             trimester: 0,
             year: 0,
+            month_partial: 0,
+            trimester_partial: 0,
+            year_partial: 0,
             month_complete: 0,
             trimester_complete: 0,
-            year_complete: 0
+            year_complete: 0,
         };
         for (let date of moment.range(start, end).by('days')) {
             date = date.format('YYYY-MM-DD');
-            if (data[date]) {
-                totals.year += 1;
-                if (date >= thisMonth)
-                    totals.month += 1;
-                if (date >= thisTrimester)
-                    totals.trimester += 1;
-            }
-            if (data[date] && data[date]._complete == 1) {
+            if (!data[date])
+                continue;
+            totals.year += 1;
+            if (date >= thisMonth)
+                totals.month += 1;
+            if (date >= thisTrimester)
+                totals.trimester += 1;
+            if (data[date]._complete == 1) {
                 totals.year_complete += 1;
                 if (date >= thisMonth)
                     totals.month_complete += 1;
                 if (date >= thisTrimester)
                     totals.trimester_complete += 1;
             }
+            if (data[date]._partial == 1) {
+                totals.year_partial += 1;
+                if (date >= thisMonth)
+                    totals.month_partial += 1;
+                if (date >= thisTrimester)
+                    totals.trimester_partial += 1;
+            }
         }
-        $t.find(".a1").text("");
-        $t.find(".a2").text("");
-        $t.find(".a3").text("");
+        $t.find(".a1").text(`${totals.month_partial} / ${totals.month}`);
+        $t.find(".a2").text(`${totals.trimester_partial} / ${totals.trimester}`);
+        $t.find(".a3").text(`${totals.year_partial} / ${totals.year}`);
         $t.find(".b1").text(`${totals.month_complete} / ${totals.month}`);
         $t.find(".b2").text(`${totals.trimester_complete} / ${totals.trimester}`);
         $t.find(".b3").text(`${totals.year_complete} / ${totals.year}`);
@@ -340,10 +357,9 @@ $(document).ready(() => {
                 unique[date] = unique[date] || [];
 
                 // Init Json structure
-                if (tmp[date] === undefined) {
-                    tmp[date] = {};
-                    tmp[date]["_complete"] = 0;
-                }
+                tmp[date] ??= {};
+                tmp[date]["_complete"] ??= 0;
+                tmp[date]["_partial"] ??= 0;
 
                 // Flip through all the questions for today
                 $.each(calSettings.questions, (variable, question) => {
