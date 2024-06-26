@@ -27,7 +27,7 @@ class CalendarQuestions extends AbstractExternalModule
     public function redcap_data_entry_form($project_id, $record, $instrument, $event_id)
     {
 
-        $calNames = $this->getProjectSetting('name');
+        $calNames = $this->getProjectSetting('name') ?? [];
         $settings = $this->getProjectSettings();
         $fields = REDCap::getFieldNames($instrument);
 
