@@ -43,7 +43,7 @@ class CalendarQuestions extends AbstractExternalModule
 
             // Grab any existing data
             $json = REDCap::getData($project_id, 'array', $record, $field, $event_id);
-            $json = empty($json) ? "{}" : end(end(end($json)));
+            $json = empty($json) ? "{}" : $json[$record][$event_id][$field];
             $calendars[$field] = [
                 'json' => $json,
                 'noFuture' => $settings['nofuture'][$index],
@@ -112,8 +112,9 @@ class CalendarQuestions extends AbstractExternalModule
                 }
 
                 // Fetch start/end values
-                $start = end(end(end(REDCap::getData($project_id, 'array', $record, $startVar, $startEvent))));
-                $end = end(end(end(REDCap::getData($project_id, 'array', $record, $endVar, $endEvent))));
+                $seData = REDCap::getData($project_id, 'array', $record, [$startVar, $endVar], [$startEvent, $endEvent]);
+                $start = $seData[$record][$startEvent][$startVar];
+                $end = $seData[$record][$endEvent][$endVar];
 
                 // Explode any excluded values
                 $exclude = array_filter(array_map('trim', explode(',', $settings['range-exclude'][$index][$qindex])));
