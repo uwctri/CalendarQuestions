@@ -45,7 +45,7 @@ class CalendarQuestions extends AbstractExternalModule
             $json = REDCap::getData($project_id, 'array', $record, $field, $event_id);
             $json = empty($json) ? "{}" : $json[$record][$event_id][$field];
             $calendars[$field] = [
-                'json' => $json,
+                'json' => $this->escape($json),
                 'noFuture' => $settings['nofuture'][$index],
                 'stats' => $settings['stats'][$index],
                 'questions' => [],
