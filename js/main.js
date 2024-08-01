@@ -212,13 +212,15 @@ $(document).ready(() => {
         // Only int and float have any validation on them
         $cal.find(`.event-item-input-int`).on("keypress keyup blur", (event) => {
             const $target = $(event.currentTarget);
-            $target.val($target.val().replace(/[^\d].+/, ""));
+            const isNeg = (event.which == 45) || ($target.val().startsWith("-"));
+            $target.val((isNeg ? "-" : "") + $target.val().replace(/[^0-9]/, ""));
             if ((event.which < 48 || event.which > 57))
                 event.preventDefault();
         });
         $cal.find(`.event-item-input-float`).on("keypress keyup blur", (event) => {
             const $target = $(event.currentTarget);
-            $target.val($target.val().replace(/[^0-9\.]/g, ""));
+            const isNeg = (event.which == 45) || ($target.val().startsWith("-"));
+            $target.val((isNeg ? "-" : "") + $target.val().replace(/[^0-9\.]/g, ""));
             if ((event.which != 46 || $target.val().indexOf('.') != -1) && (event.which < 48 || event.which > 57)) {
                 event.preventDefault();
             }
