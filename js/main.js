@@ -3,6 +3,8 @@ $(document).ready(() => {
     let json = {};
     let filters = {};
     let module = ExternalModules.UWMadison.CalendarQuestions;
+    const compressLimit = Math.pow(2, 16) - 4000;
+    // TODO - Add a setting to enable/disable compressed storage
 
     /*
     Parse and load onto the screen data for a specific calendar and month
@@ -59,7 +61,14 @@ $(document).ready(() => {
     const jsonSaveCalendar = (calendar, ymd, variable, value) => {
         json[calendar][ymd][variable] = value;
         updateDayComplete(calendar, false, ymd);
-        $(`textarea[name=${calendar}]`).val(JSON.stringify(json[calendar]));
+        const tmp = JSON.stringify(json[calendar]);
+        if (tmp.length > compressLimit) {
+            compress(tmp).then((compressed) => {
+                $(`textarea[name=${calendar}]`).val(compressed);
+            });
+            return;
+        }
+        $(`textarea[name=${calendar}]`).val(tmp);
     };
 
     /*
@@ -270,6 +279,36 @@ $(document).ready(() => {
         showDateQuestions(calendar, ymd);
     };
 
+    const isCompressed = (string) => {
+        return string.startsWith("H4sIA");
+    }
+
+    const compress = async (string) => {
+        const byteArray = new TextEncoder().encode(string);
+        const cs = new CompressionStream("gzip");
+        const writer = cs.writable.getWriter();
+        writer.write(byteArray);
+        writer.close();
+        const buf = await new Response(cs.readable).arrayBuffer();
+        return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)));
+    }
+
+    const decompress = async (string) => {
+        const binString = atob(string)
+        let bytes = new Uint8Array(binString.length);
+        bytes = bytes.map((el, i) => binString.charCodeAt(i))
+        const cs = new DecompressionStream("gzip");
+        const writer = cs.writable.getWriter();
+        writer.write(bytes.buffer);
+        writer.close();
+        return new Response(cs.readable).arrayBuffer().then(function (arrayBuffer) {
+            return new TextDecoder().decode(arrayBuffer);
+        });
+    }
+
+    /*
+    Update the stats row for a calendar
+    */
     const updateStats = (calendar, ymd) => {
         if (!module.config[calendar].stats) return;
         const $t = $(`#${calendar}-tr`).next().find("table");
@@ -326,7 +365,7 @@ $(document).ready(() => {
     window['moment-range'].extendMoment(moment);
 
     // Loop over all config
-    $.each(module.config, (calName, calSettings) => {
+    $.each(module.config, async (calName, calSettings) => {
 
         // Prep the area for the calendar
         if ($(`[name=${calName}]:visible`).length == 0) return;
@@ -339,7 +378,8 @@ $(document).ready(() => {
 
         // Load JSON from the text area into temp Json var
         let tmp = $(`textarea[name=${calName}]`).val();
-        tmp = isEmpty(tmp) ? {} : JSON.parse(tmp);
+        tmp = isCompressed(tmp) ? await decompress(tmp) : tmp;
+        tmp = isEmpty(tmp) ? {} : isComJSON.parse(tmp);
 
         let events = [];
         let unique = {};

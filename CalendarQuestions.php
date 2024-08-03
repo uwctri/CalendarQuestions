@@ -40,12 +40,8 @@ class CalendarQuestions extends AbstractExternalModule
         foreach ($targets as $field) {
 
             $index = array_search($field, $calNames);
-
-            // Grab any existing data
-            $json = REDCap::getData($project_id, 'array', $record, $field, $event_id);
-            $json = empty($json) ? "{}" : $json[$record][$event_id][$field];
             $calendars[$field] = [
-                'json' => $this->escape($json),
+                'json' => "{}",
                 'noFuture' => $settings['nofuture'][$index],
                 'stats' => $settings['stats'][$index],
                 'questions' => [],
