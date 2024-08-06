@@ -44,6 +44,7 @@ class CalendarQuestions extends AbstractExternalModule
                 'json' => "{}",
                 'noFuture' => $settings['nofuture'][$index],
                 'stats' => $settings['stats'][$index],
+                'compress' => $settings['compress'][$index],
                 'questions' => [],
                 'range' => [],
                 'buttons' => []

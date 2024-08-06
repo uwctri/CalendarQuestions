@@ -2,7 +2,7 @@
 
 ## What does it do?
 
-Calendar Questions allows you to capture simple  questions in a nice-looking calendar format where questions are repeated for every day within a range or ranges. This data is stored as JSON in a redcap text area (notes) field.
+Calendar Questions allows you to capture simple questions in a nice-looking calendar format where questions are repeated for every day within a range or ranges. This data is stored as JSON in a redcap text area (notes) field. This method of saving data means you can save three questions a day, every day, for 600+ days. The actual amount of data that can be stored depends on how you name fields, how many fields you save data to per day, and what type of data you collect.
 
 ## Installing
 

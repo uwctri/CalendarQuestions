@@ -48,7 +48,7 @@ $(document).ready(() => {
         const date = moment(ymd);
         const $cal = $(`#${calendar}Calendar`);
         $cal.find(`.event-item`).hide();
-        if (!module.config[calendar]['noFuture'] || (moment().diff(date, 'days') > 0)) {
+        if (!module.config[calendar].noFuture || (moment().diff(date, 'days') > 0)) {
             $cal.find(`.event-item[data-date=${date.format('YYYY-MM-DD')}]`).show();
         }
         applyReplaceFilter(calendar, ymd);
@@ -62,7 +62,8 @@ $(document).ready(() => {
         json[calendar][ymd][variable] = value;
         updateDayComplete(calendar, false, ymd);
         const tmp = JSON.stringify(json[calendar]);
-        if (tmp.length > compressLimit) {
+        const compress = module.config[calendar].compress;
+        if (compress && (tmp.length > compressLimit)) {
             compress(tmp).then((compressed) => {
                 $(`textarea[name=${calendar}]`).val(compressed);
             });
@@ -115,7 +116,7 @@ $(document).ready(() => {
         const newClass = data['_complete'] ? 'day-complete' : data['_partial'] ? 'day-partial' : 'day-incomplete';
         const $cal = $(`#${calendar}Calendar`);
         $cal.find(`.calendar-day-${ymd}`).removeClass('day-complete day-incomplete day-partial');
-        if (module.config[calendar]['noFuture'] && (moment().diff(moment(ymd, 'YYYY-MM-DD'), 'days') <= 0)) return;
+        if (module.config[calendar].noFuture && (moment().diff(moment(ymd, 'YYYY-MM-DD'), 'days') <= 0)) return;
         $cal.find(`.calendar-day-${ymd}`).addClass(newClass);
     };
 

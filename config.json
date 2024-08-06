@@ -24,6 +24,11 @@
                     "required": true
                 },
                 {
+                    "key": "compress",
+                    "name": "<b>Use data compression</b><br>By default, data is stored in a JSON format. This option will compress the data to save space when the the calendar field is near the character limit. Only enable this feature if you are near the character limit and understand how to work with compressed data.",
+                    "type": "checkbox"
+                },
+                {
                     "key": "nofuture",
                     "name": "<b>Prevent Future Data Entry</b><br>Stop users from entering data on days in the future",
                     "type": "checkbox"
