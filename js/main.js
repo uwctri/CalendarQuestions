@@ -3,8 +3,7 @@ $(document).ready(() => {
     let json = {}
     let filters = {}
     let module = ExternalModules.UWMadison.CalendarQuestions
-    //const compressLimit = Math.pow(2, 16) - 4000
-    const compressLimit = 100
+    const compressLimit = Math.pow(2, 16) - 4000
 
     /*
     Show the out of space pop-up message
@@ -385,11 +384,12 @@ $(document).ready(() => {
 
         // Load JSON from the text area into temp Json var
         let tmp = $(`textarea[name=${calName}]`).val()
+        const tmpLength = tmp.length
         tmp = isCompressed(tmp) ? await decompress(tmp) : tmp
         tmp = isEmpty(tmp) ? {} : JSON.parse(tmp)
 
         // Show a warning if the JSON is too large
-        if (!module.config[calName].compress && tmp.length > compressLimit)
+        if (!calSettings.compress && tmpLength > compressLimit)
             outOfSpaceWarning()
 
         let events = []
