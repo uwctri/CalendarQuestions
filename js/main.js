@@ -3,8 +3,19 @@ $(document).ready(() => {
     let json = {}
     let filters = {}
     let module = ExternalModules.UWMadison.CalendarQuestions
-    const compressLimit = Math.pow(2, 16) - 4000
-    // TODO - Add a setting to enable/disable compressed storage
+    //const compressLimit = Math.pow(2, 16) - 4000
+    const compressLimit = 100
+
+    /*
+    Show the out of space pop-up message
+    */
+    const outOfSpaceWarning = () => {
+        Swal.fire({
+            title: "Space Issue!",
+            text: "The Calendar Question field on this page is nearly out of space. Consider enabling compression in the EM settings.",
+            icon: "warning"
+        });
+    }
 
     /*
     Parse and load onto the screen data for a specific calendar and month
@@ -35,9 +46,7 @@ $(document).ready(() => {
                     $cal.find(search).attr('checked', true)
                 }
             })
-
             colorDay(calendar, date, vars)
-
         })
     }
 
@@ -62,8 +71,7 @@ $(document).ready(() => {
         json[calendar][ymd][variable] = value
         updateDayComplete(calendar, false, ymd)
         const tmp = JSON.stringify(json[calendar])
-        const compress = module.config[calendar].compress
-        if (compress && (tmp.length > compressLimit)) {
+        if (module.config[calendar].compress && (tmp.length > compressLimit)) {
             compress(tmp).then((compressed) => {
                 $(`textarea[name=${calendar}]`).val(compressed)
             })
@@ -105,8 +113,6 @@ $(document).ready(() => {
 
         if (updateColor)
             colorDay(calendar, ymd, json[calendar][ymd])
-
-        $(`textarea[name=${calendar}]`).val(JSON.stringify(json[calendar]))
     }
 
     /*
@@ -380,7 +386,11 @@ $(document).ready(() => {
         // Load JSON from the text area into temp Json var
         let tmp = $(`textarea[name=${calName}]`).val()
         tmp = isCompressed(tmp) ? await decompress(tmp) : tmp
-        tmp = isEmpty(tmp) ? {} : isComJSON.parse(tmp)
+        tmp = isEmpty(tmp) ? {} : JSON.parse(tmp)
+
+        // Show a warning if the JSON is too large
+        if (!module.config[calName].compress && tmp.length > compressLimit)
+            outOfSpaceWarning()
 
         let events = []
         let unique = {}
