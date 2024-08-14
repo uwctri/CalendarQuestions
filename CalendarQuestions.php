@@ -82,15 +82,14 @@ class CalendarQuestions extends AbstractExternalModule
                 }
 
                 // Save settings 
-                if (!$branchingLogicEnabled || $branchLogicPass) {
-                    $calendars[$field]['questions'][$variable] = [
-                        'index' => $qindex,
-                        'text' => $question,
-                        'type' => $type,
-                        'variable' => $variable,
-                        'replace' => $replace
-                    ];
-                }
+                $calendars[$field]['questions'][$variable] = [
+                    'index' => $qindex,
+                    'text' => $question,
+                    'type' => $type,
+                    'variable' => $variable,
+                    'replace' => $replace,
+                    'logic' => !$branchingLogicEnabled || $branchLogicPass
+                ];
             }
 
             // Build out ranges based on settings

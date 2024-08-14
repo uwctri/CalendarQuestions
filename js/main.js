@@ -29,8 +29,9 @@ $(document).ready(() => {
 
                 // Skip days outside the month
                 if (varName[0] == "_" || (moment(date).format("MM") != month)) return
-
                 let search = `.event-item[data-date=${date}] *[data-variable=${varName}]`
+
+                // Check for variables that were removed from the config
                 if (typeof module.config[calendar].questions[varName] === "undefined") return
                 const type = module.config[calendar].questions[varName].type
 
@@ -100,10 +101,11 @@ $(document).ready(() => {
         $.each(json[calendar][ymd], (varName, value) => {
             if (value !== undefined && varName[0] != "_" &&
                 module.config[calendar].questions[varName].type != 'check') {
-                if (value.toString() == "")
+                if (value.toString() == "") {
                     json[calendar][ymd]['_complete'] = 0
-                else
+                } else {
                     json[calendar][ymd]['_partial'] = 1
+                }
             }
         })
 
@@ -418,11 +420,14 @@ $(document).ready(() => {
                 $.each(calSettings.questions, (variable, question) => {
 
                     if (unique[date].includes(variable) ||
-                        (isEmpty(tmp[date][variable]) && rangeObj.exclude.includes(variable))) return
+                        (isEmpty(tmp[date][variable]) && rangeObj.exclude.includes(variable)))
+                        return
 
-                    if (question.replace.length) {
+                    if (question.replace.length)
                         filters[calName][date].push(...question.replace)
-                    }
+
+                    if (!question.logic)
+                        return
 
                     unique[date].push(variable)
                     tmp[date][variable] = tmp[date][variable] || ""
