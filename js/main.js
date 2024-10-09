@@ -128,7 +128,7 @@ $(document).ready(() => {
     }
 
     /*
-    Event listener for the Mark all Button. Marks all variables in calendar as value
+    Event listener for the Mark all Button. Marks all variables in calendar for given month as value
     */
     const calMarkAllAsValue = (calendar, variable, value) => {
 
@@ -138,6 +138,7 @@ $(document).ready(() => {
             if (date.split('-')[1] != month || data['_complete'] == 1)
                 return
             json[calendar][date][variable] = value
+            updateDayComplete(calendar, true, date)
         })
 
         $(`textarea[name=${calendar}]`).val(JSON.stringify(json[calendar]))
