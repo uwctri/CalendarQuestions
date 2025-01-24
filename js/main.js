@@ -157,8 +157,8 @@ $(document).ready(() => {
         $.each(settings['buttons'], (_, btn) => {
 
             // Insert the template button AND template link on button group
-            $cal.append(module.template.btn.replace('TEXT', btn.text).replace('TOOLTIP', btn.tooltip))
-            $cal.find('.markAllButtonGroup .dropdown-menu').append(module.template.btnLink.replace('TEXT', btn.text).replace('TOOLTIP', btn.tooltip))
+            $cal.append(module.template.btn.replace('TEXT', btn.text).replace(btn.tooltip ? 'TOOLTIP' : `title="TOOLTIP"`, btn.tooltip ? btn.tooltip : ""))
+            $cal.find('.markAllButtonGroup .dropdown-menu').append(module.template.btnLink.replace('TEXT', btn.text).replace(btn.tooltip ? 'TOOLTIP' : `title="TOOLTIP"`, btn.tooltip ? btn.tooltip : ""))
 
             // Find the target and enable tooltip
             const $target = $cal.find('button')
