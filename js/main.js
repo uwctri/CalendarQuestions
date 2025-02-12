@@ -67,9 +67,7 @@ $(document).ready(() => {
     /*
     Save a new value for a varaible on a date, in a specific calendar 
     */
-    const jsonSaveCalendar = (calendar, ymd, variable, value) => {
-        json[calendar][ymd][variable] = value
-        updateDayComplete(calendar, false, ymd)
+    const jsonSaveCalendar = (calendar) => {
         const tmp = JSON.stringify(json[calendar])
         if (module.config[calendar].compress && (tmp.length > compressLimit)) {
             compress(tmp).then((compressed) => {
@@ -141,7 +139,7 @@ $(document).ready(() => {
             updateDayComplete(calendar, true, date)
         })
 
-        $(`textarea[name=${calendar}]`).val(JSON.stringify(json[calendar]))
+        jsonSaveCalendar(calendar)
         loadCalendarJSON(calendar, month)
     }
 
@@ -217,7 +215,11 @@ $(document).ready(() => {
         $cal.find("[class^=event-item-input-]").on('click change', (event) => {
             const $target = $(event.currentTarget)
             const newVal = $target.prop('type') == "checkbox" ? ($target.is(':checked') ? '1' : '0') : $target.val()
-            jsonSaveCalendar(calendar, $target.parent().data('date'), $target.data('variable'), newVal)
+            const ymd = $target.parent().data('date')
+            const variable = $target.data('variable')
+            json[calendar][ymd][variable] = newVal
+            updateDayComplete(calendar, false, ymd)
+            jsonSaveCalendar(calendar)
         })
     }
 
@@ -286,6 +288,7 @@ $(document).ready(() => {
         $(".today").removeClass('today')
         $(`.calendar-day-${ymd}`).addClass('today')
         showDateQuestions(calendar, ymd)
+        jsonSaveCalendar(calendar)
     }
 
     const isCompressed = (string) => {
