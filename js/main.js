@@ -2,6 +2,7 @@ $(document).ready(() => {
 
     let json = {}
     let filters = {}
+    let excludes = {}
     let module = ExternalModules.UWMadison.CalendarQuestions
     const compressLimit = Math.pow(2, 16) - 4000
 
@@ -59,6 +60,10 @@ $(document).ready(() => {
         $cal.find(`.event-item`).hide()
         if (!module.config[calendar].noFuture || (moment().diff(date, 'days') > 0)) {
             $cal.find(`.event-item[data-date=${date.format('YYYY-MM-DD')}]`).show()
+            let hideExcludes = excludes[calendar][ymd] || []
+            hideExcludes.forEach(variable => {
+                $cal.find(`*[data-variable=${variable}]`).parent().hide()
+            })
         }
         applyReplaceFilter(calendar, ymd)
         updateMarkAllButtons(calendar)
@@ -134,6 +139,8 @@ $(document).ready(() => {
 
         $.each(json[calendar], (date, data) => {
             if (date.split('-')[1] != month || data['_complete'] == 1)
+                return
+            if (excludes[calendar][date].includes(variable))
                 return
             json[calendar][date][variable] = value
             updateDayComplete(calendar, true, date)
@@ -401,6 +408,7 @@ $(document).ready(() => {
         let events = []
         let unique = {}
         filters[calName] = {}
+        excludes[calName] = {}
 
         // Build out the JSON with any new range info we might have
         $.each(calSettings.range, (_, rangeObj) => {
@@ -413,6 +421,7 @@ $(document).ready(() => {
 
                 const date = day.format('YYYY-MM-DD')
                 filters[calName][date] = filters[calName][date] || []
+                excludes[calName][date] = excludes[calName][date] || []
                 unique[date] = unique[date] || []
 
                 // Init Json structure
@@ -422,6 +431,9 @@ $(document).ready(() => {
 
                 // Flip through all the questions for today
                 $.each(calSettings.questions, (variable, question) => {
+
+                    if (rangeObj.exclude.length)
+                        excludes[calName][date].push(...rangeObj.exclude)
 
                     if (unique[date].includes(variable) ||
                         (isEmpty(tmp[date][variable]) && rangeObj.exclude.includes(variable)))
