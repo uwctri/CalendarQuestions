@@ -142,6 +142,10 @@ $(document).ready(() => {
                 return
             if (excludes[calendar][date].includes(variable))
                 return
+            if (filters[calendar][date].includes(variable))
+                return
+            if (module.config[calendar].noFuture && (moment().diff(date, 'days') < 0))
+                return
             json[calendar][date][variable] = value
             updateDayComplete(calendar, true, date)
         })
