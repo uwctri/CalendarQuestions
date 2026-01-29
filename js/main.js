@@ -135,10 +135,12 @@ $(document).ready(() => {
     */
     const calMarkAllAsValue = (calendar, variable, value) => {
 
-        const month = $(`#${calendar}Calendar .clndr-grid .today`).children().data('date').split('-')[1]
+        let tmp = $(`#${calendar}Calendar .clndr-grid .today`).children().data('date').split('-')
+        const month = tmp[1]
+        const year = tmp[0].trim()
 
         $.each(json[calendar], (date, data) => {
-            if (date.split('-')[1] != month || data['_complete'] == 1)
+            if (date.split('-')[1] != month || date.split('-')[0] != year || data['_complete'] == 1)
                 return
             if (excludes[calendar][date].includes(variable))
                 return
