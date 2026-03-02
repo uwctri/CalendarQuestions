@@ -103,6 +103,7 @@ $(document).ready(() => {
         json[calendar][ymd]['_complete'] = 1
         $.each(json[calendar][ymd], (varName, value) => {
             if (value !== undefined && varName[0] != "_" &&
+                varName in module.config[calendar].questions &&
                 module.config[calendar].questions[varName].type != 'check') {
                 if (value.toString() == "") {
                     json[calendar][ymd]['_complete'] = 0
@@ -135,12 +136,11 @@ $(document).ready(() => {
     */
     const calMarkAllAsValue = (calendar, variable, value) => {
 
-        let tmp = $(`#${calendar}Calendar .clndr-grid .today`).children().data('date').split('-')
-        const month = tmp[1]
-        const year = tmp[0].trim()
+        let today = $(`#${calendar}Calendar .clndr-grid .today`).children().data('date').trim().split('-')
 
+        console.log(json[calendar])
         $.each(json[calendar], (date, data) => {
-            if (date.split('-')[1] != month || date.split('-')[0] != year || data['_complete'] == 1)
+            if (date.split('-')[1] != today[1] || date.split('-')[0] != today[0] || data['_complete'] == 1)
                 return
             if (excludes[calendar][date].includes(variable))
                 return
