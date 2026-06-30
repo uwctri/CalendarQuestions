@@ -20,7 +20,7 @@ $(document).ready(() => {
     /*
     Parse and load onto the screen data for a specific calendar and month
     */
-    const loadCalendarJSON = (calendar, month) => {
+    const loadCalendarJSON = (calendar, month, year) => {
 
         const $cal = $(`#${calendar}Calendar`)
 
@@ -29,7 +29,7 @@ $(document).ready(() => {
             $.each(vars, (varName, value) => {
 
                 // Skip days outside the month
-                if (varName[0] == "_" || (moment(date).format("MM") != month)) return
+                if (varName[0] == "_" || (moment(date).format("MM") != month) || (moment(date).format("YYYY") != year)) return
                 let search = `.event-item[data-date=${date}] *[data-variable=${varName}]`
 
                 // Check for variables that were removed from the config
@@ -136,15 +136,16 @@ $(document).ready(() => {
     */
     const calMarkAllAsValue = (calendar, variable, value) => {
 
-        let today = $(`#${calendar}Calendar .clndr-grid .today`).children().data('date').trim().split('-')
+        const today = $(`#${calendar}Calendar .clndr-grid .today`).children().data('date').trim().split('-')
+        const month = today[1]
+        const year = today[0]
 
-        console.log(json[calendar])
         $.each(json[calendar], (date, data) => {
-            if (date.split('-')[1] != today[1] || date.split('-')[0] != today[0] || data['_complete'] == 1)
+            if (date.split('-')[1] != month || date.split('-')[0] != year || data['_complete'] == 1)
                 return
-            if (excludes[calendar][date].includes(variable))
+            if (excludes[calendar][date] && excludes[calendar][date].includes(variable))
                 return
-            if (filters[calendar][date].includes(variable))
+            if (filters[calendar][date] && filters[calendar][date].includes(variable))
                 return
             if (module.config[calendar].noFuture && (moment().diff(date, 'days') < 0))
                 return
@@ -153,7 +154,7 @@ $(document).ready(() => {
         })
 
         jsonSaveCalendar(calendar)
-        loadCalendarJSON(calendar, month)
+        loadCalendarJSON(calendar, month, year)
     }
 
     /*
@@ -440,13 +441,22 @@ $(document).ready(() => {
                     tmp[date]["_partial"] ??= 0
 
                     if (rangeObj.exclude.length)
-                        excludes[calName][date] = rangeObj.exclude
+                        excludes[calName][date].push(...rangeObj.exclude)
+
+                    // Undisclosed hack to allow for a variable to be included in the calendar even if it is excluded in the range. 
+                    // This is done by prefixing the variable with a "!" in the exclude array.
+                    rangeObj.exclude.forEach(variable => {
+                        if (!variable.startsWith("!"))
+                            return
+                        const includeVar = variable.substring(1)
+                        excludes[calName][date] = excludes[calName][date].filter(v => v != variable && v != includeVar)
+                    })
 
                     // Flip through all the questions for today
                     $.each(calSettings.questions, (variable, question) => {
 
                         if (unique[date].includes(variable) ||
-                            (isEmpty(tmp[date][variable]) && rangeObj.exclude.includes(variable)))
+                            (isEmpty(tmp[date][variable]) && excludes[calName][date].includes(variable)))
                             return
 
                         if (question.replace.length)
@@ -471,6 +481,7 @@ $(document).ready(() => {
             // Sort by question index for consistent display
             events.sort((a, b) => (b.index < a.index) ? 1 : -1)
             json[calName] = tmp
+            console.log(excludes[calName])
 
             // Init the CLNDR
             let $cal = $(`#${calName}Calendar`)
@@ -484,7 +495,7 @@ $(document).ready(() => {
                     insertMarkAllButton(calName, calSettings)
                     updateMarkAllButtons(calName)
                     showDateQuestions(calName, moment().format("YYYY-MM-DD"))
-                    loadCalendarJSON(calName, moment().format("MM"))
+                    loadCalendarJSON(calName, moment().format("MM"), moment().format("YYYY"))
                     setupSaving(calName)
                     setupValidation(calName)
                     updateStats(calName, moment().format("YYYY-MM-DD"))
@@ -509,7 +520,7 @@ $(document).ready(() => {
                         }
                         setDate(calName, firstValidDay.format("YYYY-MM-DD"))
                         showDateQuestions(calName, firstValidDay.format("YYYY-MM-DD"))
-                        loadCalendarJSON(calName, firstValidDay.format("MM"))
+                        loadCalendarJSON(calName, firstValidDay.format("MM"), firstValidDay.format("YYYY"))
                         setupSaving(calName)
                         setupValidation(calName)
                         updateStats(calName, firstValidDay.format("YYYY-MM-DD"))
