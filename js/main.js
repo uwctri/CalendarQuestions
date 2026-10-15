@@ -2,6 +2,7 @@ $(document).ready(() => {
 
     let json = {}
     let filters = {}
+    let activeQuestions = {}
     let module = ExternalModules.UWMadison.CalendarQuestions
     const compressLimit = Math.pow(2, 16) - 4000
 
@@ -67,9 +68,7 @@ $(document).ready(() => {
     /*
     Save a new value for a varaible on a date, in a specific calendar 
     */
-    const jsonSaveCalendar = (calendar, ymd, variable, value) => {
-        json[calendar][ymd][variable] = value
-        updateDayComplete(calendar, false, ymd)
+    const saveCalendarJSON = (calendar) => {
         const tmp = JSON.stringify(json[calendar])
         if (module.config[calendar].compress && (tmp.length > compressLimit)) {
             compress(tmp).then((compressed) => {
@@ -78,6 +77,12 @@ $(document).ready(() => {
             return
         }
         $(`textarea[name=${calendar}]`).val(tmp)
+    }
+
+    const jsonSaveCalendar = (calendar, ymd, variable, value) => {
+        json[calendar][ymd][variable] = value
+        updateDayComplete(calendar, false, ymd)
+        saveCalendarJSON(calendar)
     }
 
     /*
@@ -96,18 +101,24 @@ $(document).ready(() => {
 
         const start_complete = json[calendar][ymd]['_complete']
         const start_partial = json[calendar][ymd]['_partial']
+        let isComplete = true
+        let isPartial = false
 
-        json[calendar][ymd]['_complete'] = 1
-        $.each(json[calendar][ymd], (varName, value) => {
-            if (value !== undefined && varName[0] != "_" &&
-                module.config[calendar].questions[varName].type != 'check') {
-                if (value.toString() == "") {
-                    json[calendar][ymd]['_complete'] = 0
-                } else {
-                    json[calendar][ymd]['_partial'] = 1
-                }
+        $.each(activeQuestions[calendar][ymd] || [], (_, varName) => {
+            const question = module.config[calendar].questions[varName]
+            if (!question || question.type == 'check')
+                return
+
+            const value = json[calendar][ymd][varName]
+            if (value === undefined || value === null || value.toString() == "") {
+                isComplete = false
+            } else {
+                isPartial = true
             }
         })
+
+        json[calendar][ymd]['_complete'] = isComplete ? 1 : 0
+        json[calendar][ymd]['_partial'] = isPartial ? 1 : 0
 
         if (start_complete != json[calendar][ymd]['_complete'] || start_partial != json[calendar][ymd]['_partial'])
             updateStats(calendar, ymd)
@@ -141,7 +152,7 @@ $(document).ready(() => {
             updateDayComplete(calendar, true, date)
         })
 
-        $(`textarea[name=${calendar}]`).val(JSON.stringify(json[calendar]))
+        saveCalendarJSON(calendar)
         loadCalendarJSON(calendar, month)
     }
 
@@ -398,6 +409,7 @@ $(document).ready(() => {
         let events = []
         let unique = {}
         filters[calName] = {}
+        activeQuestions[calName] = {}
 
         // Build out the JSON with any new range info we might have
         $.each(calSettings.range, (_, rangeObj) => {
@@ -411,6 +423,7 @@ $(document).ready(() => {
                 const date = day.format('YYYY-MM-DD')
                 filters[calName][date] = filters[calName][date] || []
                 unique[date] = unique[date] || []
+                activeQuestions[calName][date] = activeQuestions[calName][date] || []
 
                 // Init Json structure
                 tmp[date] ??= {}
@@ -424,13 +437,14 @@ $(document).ready(() => {
                         (isEmpty(tmp[date][variable]) && rangeObj.exclude.includes(variable)))
                         return
 
-                    if (question.replace.length)
-                        filters[calName][date].push(...question.replace)
-
                     if (!question.logic)
                         return
 
+                    if (question.replace.length)
+                        filters[calName][date].push(...question.replace)
+
                     unique[date].push(variable)
+                    activeQuestions[calName][date].push(variable)
                     tmp[date][variable] = tmp[date][variable] || ""
                     events.push({
                         index: question.index,
@@ -441,6 +455,12 @@ $(document).ready(() => {
                     })
                 })
             }
+        })
+
+        $.each(activeQuestions[calName], (date, variables) => {
+            activeQuestions[calName][date] = variables.filter(variable =>
+                !filters[calName][date].includes(variable)
+            )
         })
 
         // Sort by question index for consistent display
