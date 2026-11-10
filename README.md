@@ -31,3 +31,10 @@ data = json.loads(gzip.decompress(binascii.a2b_base64(redcap_string)))
 ## Call Outs
 
 * The calendar is not responsive and looks bad on smaller screens.
+
+
+## Dependencies
+
+* **CLNDR** (`js/clndr.min.js`) - Pinned to v1.5.1. Upstream repository was archived/abandoned in 2019.
+* **Moment.js** (`js/moment.min.js`, `js/moment-range.min.js`) - Pinned to v2.29.4. Maintenance-only mode; required by CLNDR.
+* **Lodash** (`js/lodash.min.js`) - Pinned to v4.17.21 for templating stability.
