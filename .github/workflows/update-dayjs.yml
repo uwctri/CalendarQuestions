@@ -39,9 +39,16 @@ jobs:
           IFS='.' read -r CUR_MAJ CUR_MIN CUR_PAT <<< "$CURRENT"
           IFS='.' read -r NEW_MAJ NEW_MIN NEW_PAT <<< "$LATEST"
 
+          CUR_MAJ=${CUR_MAJ:-0}
+          CUR_MIN=${CUR_MIN:-0}
+          CUR_PAT=${CUR_PAT:-0}
+          NEW_MAJ=${NEW_MAJ:-0}
+          NEW_MIN=${NEW_MIN:-0}
+          NEW_PAT=${NEW_PAT:-0}
+
           if [ "$NEW_MAJ" -gt "$CUR_MAJ" ]; then
             echo "change_type=major" >> "$GITHUB_OUTPUT"
-          elif [ "$NEW_MIN" -gt "$CUR_MIN" ]; then
+          elif [ "$NEW_MAJ" -eq "$CUR_MAJ" ] && [ "$NEW_MIN" -gt "$CUR_MIN" ]; then
             echo "change_type=minor" >> "$GITHUB_OUTPUT"
           else
             echo "change_type=patch" >> "$GITHUB_OUTPUT"

@@ -7,6 +7,44 @@ $(document).ready(() => {
     let module = ExternalModules.UWMadison.CalendarQuestions
     const compressLimit = Math.pow(2, 16) - 4000
 
+    const TEMPLATES = {
+        td: '<td class="labelrc col-12" colspan="3"><div class="clndr" id="CALNAME"></div></td>',
+        btn: '<button type="button" class="btn btn-dark btn-sm markAllButton" data-bs-toggle="tooltip" data-toggle="tooltip" title="TOOLTIP">TEXT</button>',
+        btnLink: '<a class="dropdown-item" href="#" title="TOOLTIP">TEXT</a>',
+        btnGroup: `<div class="btn-group markAllButtonGroup">
+  <button class="btn btn-dark btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" data-toggle="dropdown">
+    Mark all...
+  </button>
+  <div class="dropdown-menu"></div>
+</div>`,
+        stats: `<tr class="clndr-stats">
+  <td colspan="3">
+    <table class="table mb-0 font-weight-bold">
+      <tbody>
+        <tr>
+          <td></td>
+          <td>This Month</td>
+          <td>Past 90 Days</td>
+          <td>Past Year</td>
+        </tr>
+        <tr>
+          <td>Partial Data</td>
+          <td class="a1">? / ?</td>
+          <td class="a2">? / ?</td>
+          <td class="a3">? / ?</td>
+        </tr>
+        <tr>
+          <td>All Data</td>
+          <td class="b1">? / ?</td>
+          <td class="b2">? / ?</td>
+          <td class="b3">? / ?</td>
+        </tr>
+      </tbody>
+    </table>
+  </td>
+</tr>`
+    }
+
     /*
     Safe local empty checker
     */
@@ -66,7 +104,7 @@ $(document).ready(() => {
         const $cal = $(`#${calendar}Calendar`)
         $cal.find(`.event-item`).hide()
 
-        if (!module.config[calendar].noFuture || (dayjs().diff(date, 'day') > 0)) {
+        if (!module.config[calendar].noFuture || !date.isAfter(dayjs(), 'day')) {
             $cal.find(`.event-item[data-date=${date.format('YYYY-MM-DD')}]`).show()
             let hideExcludes = excludes[calendar][ymd] || []
             hideExcludes.forEach(variable => {
@@ -74,7 +112,7 @@ $(document).ready(() => {
                 if (module.config[calendar].alwaysShowData && !isEmpty(json[calendar]?.[ymd]?.[variable])) {
                     return
                 }
-                $cal.find(`*[data-variable=${variable}]`).parent().hide()
+                $cal.find(`.event-item[data-date=${date.format('YYYY-MM-DD')}] *[data-variable=${variable}]`).closest('.event-item').hide()
             })
         }
         applyReplaceFilter(calendar, ymd)
@@ -141,7 +179,7 @@ $(document).ready(() => {
         const newClass = data['_complete'] ? 'day-complete' : (data['_partial'] ? 'day-partial' : 'day-incomplete')
         const $cal = $(`#${calendar}Calendar`)
         $cal.find(`.calendar-day-${ymd}`).removeClass('day-complete day-incomplete day-partial')
-        if (module.config[calendar].noFuture && (dayjs().diff(dayjs(ymd), 'day') <= 0)) return
+        if (module.config[calendar].noFuture && dayjs(ymd).isAfter(dayjs(), 'day')) return
         $cal.find(`.calendar-day-${ymd}`).addClass(newClass)
     }
 
@@ -158,7 +196,7 @@ $(document).ready(() => {
             if (date.split('-')[1] !== month || date.split('-')[0] !== year || data['_complete'] === 1) return
             if (excludes[calendar][date] && excludes[calendar][date].includes(variable)) return
             if (filters[calendar][date] && filters[calendar][date].includes(variable)) return
-            if (module.config[calendar].noFuture && (dayjs().diff(dayjs(date), 'day') < 0)) return
+            if (module.config[calendar].noFuture && dayjs(date).isAfter(dayjs(), 'day')) return
 
             json[calendar][date][variable] = value
             updateDayComplete(calendar, true, date)
@@ -173,19 +211,30 @@ $(document).ready(() => {
     */
     const insertMarkAllButton = (calendar, settings) => {
         const $cal = $(`#${calendar}Calendar`)
-        $cal.append(module.template.btnGroup)
+        $cal.find('.markAllButton, .markAllButtonGroup').remove()
+        if (!settings['buttons'] || !settings['buttons'].length) return
+
+        $cal.append(TEMPLATES.btnGroup)
         const $dropDown = $cal.find('.markAllButtonGroup .dropdown-menu')
 
         $.each(settings['buttons'] || [], (_, btn) => {
-            $cal.append(module.template.btn.replace('TEXT', btn.text).replace(btn.tooltip ? 'TOOLTIP' : `title="TOOLTIP"`, btn.tooltip ? btn.tooltip : ""))
-            $dropDown.append(module.template.btnLink.replace('TEXT', btn.text).replace(btn.tooltip ? 'TOOLTIP' : `title="TOOLTIP"`, btn.tooltip ? btn.tooltip : ""))
+            const btnHtml = TEMPLATES.btn
+                .replace('TEXT', btn.text)
+                .replace(btn.tooltip ? 'TOOLTIP' : `title="TOOLTIP"`, btn.tooltip ? btn.tooltip : "")
+            const $btn = $(btnHtml)
+            $cal.append($btn)
 
-            const $target = $cal.find('button')
-            if (btn.tooltip && $.fn.tooltip) $target.last().tooltip()
+            const linkHtml = TEMPLATES.btnLink
+                .replace('TEXT', btn.text)
+                .replace(btn.tooltip ? 'TOOLTIP' : `title="TOOLTIP"`, btn.tooltip ? btn.tooltip : "")
+            const $link = $(linkHtml)
+            $dropDown.append($link)
+
+            if (btn.tooltip && $.fn.tooltip) $btn.tooltip()
 
             const markfunc = () => calMarkAllAsValue(calendar, btn.variable, btn.value)
-            $target.last().on('click', markfunc)
-            $dropDown.find('.dropdown-item').last().on('click', markfunc)
+            $btn.on('click', markfunc)
+            $link.on('click', markfunc)
         })
     }
 
@@ -195,7 +244,7 @@ $(document).ready(() => {
     const updateMarkAllButtons = (calendar) => {
         const $cal = $(`#${calendar}Calendar`)
         const $dropDown = $cal.find('.markAllButtonGroup .dropdown-menu')
-        $cal.parent().find(".markAllButton").show()
+        $cal.find(".markAllButton").show()
         $cal.find('.markAllButtonGroup').hide()
         $cal.find('.markAllButtonGroup .dropdown-item').show()
         let btnCount = 0
@@ -214,7 +263,7 @@ $(document).ready(() => {
         })
 
         if (btnCount > 2) {
-            $cal.parent().find(".markAllButton").hide()
+            $cal.find(".markAllButton").hide()
             $cal.find('.markAllButtonGroup').show()
         }
     }
@@ -267,6 +316,10 @@ $(document).ready(() => {
     Event listener for arrow nav on the calendar
     */
     const arrowNavigation = (event) => {
+        if (['INPUT', 'TEXTAREA', 'SELECT'].includes(event.target.tagName) || event.target.isContentEditable) {
+            return
+        }
+
         const arrowMap = {
             "ArrowLeft": -1,
             "ArrowUp": -7,
@@ -301,7 +354,7 @@ $(document).ready(() => {
             if (module.config[calendar].alwaysShowData && !isEmpty(json[calendar]?.[ymd]?.[varName])) {
                 return
             }
-            $cal.find(`[data-variable=${varName}]`).parent().hide()
+            $cal.find(`.event-item[data-date=${ymd}] *[data-variable=${varName}]`).closest('.event-item').hide()
         })
     }
 
@@ -328,7 +381,13 @@ $(document).ready(() => {
         writer.write(byteArray)
         writer.close()
         const buf = await new Response(cs.readable).arrayBuffer()
-        return btoa(String.fromCharCode.apply(null, new Uint8Array(buf)))
+        const bytes = new Uint8Array(buf)
+        let binary = ''
+        const chunk = 8192
+        for (let i = 0; i < bytes.length; i += chunk) {
+            binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk))
+        }
+        return btoa(binary)
     }
 
     const decompress = async (string) => {
@@ -337,7 +396,7 @@ $(document).ready(() => {
         bytes = bytes.map((el, i) => binString.charCodeAt(i))
         const cs = new DecompressionStream("gzip")
         const writer = cs.writable.getWriter()
-        writer.write(bytes.buffer)
+        writer.write(bytes)
         writer.close()
         return new Response(cs.readable).arrayBuffer().then(function (arrayBuffer) {
             return new TextDecoder().decode(arrayBuffer)
@@ -535,16 +594,21 @@ $(document).ready(() => {
         $.each(module.config || {}, async (calName, calSettings) => {
             if ($(`[name=${calName}]:visible`).length === 0) return
             $(`#${calName}-tr td`).hide()
-            $(`#${calName}-tr`).append(module.template.td.replace('CALNAME', `${calName}Calendar`))
+            $(`#${calName}-tr`).append(TEMPLATES.td.replace('CALNAME', `${calName}Calendar`))
 
             if (calSettings.stats) {
-                $(`#${calName}-tr`).after(module.template.stats)
+                $(`#${calName}-tr`).after(TEMPLATES.stats)
             }
 
             let tmp = $(`textarea[name=${calName}]`).val() || ""
             const tmpLength = tmp.length
-            tmp = isCompressed(tmp) ? await decompress(tmp) : tmp
-            tmp = isEmpty(tmp) ? {} : JSON.parse(tmp)
+            try {
+                tmp = isCompressed(tmp) ? await decompress(tmp) : tmp
+                tmp = isEmpty(tmp) ? {} : JSON.parse(tmp)
+            } catch (e) {
+                console.error("CalendarQuestions: Failed to parse calendar data JSON:", e)
+                tmp = {}
+            }
 
             if (!calSettings.compress && tmpLength > compressLimit) {
                 outOfSpaceWarning()
@@ -643,11 +707,12 @@ $(document).ready(() => {
                         }
                     },
                     onMonthChange: (firstOfMonth) => {
-                        let firstValidDay = $cal.find(".day.event span").first()
+                        let firstValidDay = $cal.find(".day.event:not(.adjacent-month) span").first()
                         firstValidDay = dayjs(firstValidDay.length && firstValidDay.data('date') ? firstValidDay.data('date') : firstOfMonth)
                         if (firstOfMonth.format("MM") !== firstValidDay.format("MM")) {
                             firstValidDay = firstOfMonth
                         }
+                        insertMarkAllButton(calName, calSettings)
                         setDate(calName, firstValidDay.format("YYYY-MM-DD"))
                         showDateQuestions(calName, firstValidDay.format("YYYY-MM-DD"))
                         loadCalendarJSON(calName, firstValidDay.format("MM"), firstValidDay.format("YYYY"))

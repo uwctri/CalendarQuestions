@@ -12,11 +12,11 @@ class CalendarQuestions extends AbstractExternalModule
     */
     public function redcap_every_page_top($project_id)
     {
-        if ($this->isPage('ExternalModules/manager/project.php') && $project_id) {
-            $this->loadSettings([], true);
-            $this->includeCSS();
-            $this->includeJs('config.js');
-        }
+        if (!$this->isPage('ExternalModules/manager/project.php') || empty($project_id))
+            return;
+        $this->loadSettings([], true);
+        $this->includeCSS();
+        $this->includeJs('config.js');
     }
 
     /*
@@ -24,21 +24,21 @@ class CalendarQuestions extends AbstractExternalModule
     */
     public function redcap_data_entry_form($project_id, $record, $instrument, $event_id)
     {
-        $this->renderCalendarOnFormOrSurvey($project_id, $record, $instrument, $event_id);
+        $this->renderCalendar($project_id, $record, $instrument, $event_id);
     }
 
     /*
     Redcap Survey Page Hook
     */
-    public function redcap_survey_page($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance)
+    public function redcap_survey_page($project_id, $record, $instrument, $event_id)
     {
-        $this->renderCalendarOnFormOrSurvey($project_id, $record, $instrument, $event_id);
+        $this->renderCalendar($project_id, $record, $instrument, $event_id);
     }
 
     /*
     Primary render handler for both data entry forms and surveys
     */
-    private function renderCalendarOnFormOrSurvey($project_id, $record, $instrument, $event_id)
+    private function renderCalendar($project_id, $record, $instrument, $event_id)
     {
         $settings = $this->getProjectSettings($project_id);
         $fields = REDCap::getFieldNames($instrument);
@@ -48,13 +48,13 @@ class CalendarQuestions extends AbstractExternalModule
         $calNames = $settings['name'] ?? [];
 
         foreach ($calNames as $index => $field) {
-            if (empty($field) || !in_array($field, $fields)) continue;
+            if (empty($field) || !in_array($field, $fields))
+                continue;
 
             // Issue #3: Check event scoping if specified
             $calEvent = $settings['event'][$index] ?? null;
-            if (!empty($calEvent) && !empty($event_id) && $calEvent != $event_id) {
+            if (!empty($calEvent) && !empty($event_id) && $calEvent != $event_id)
                 continue;
-            }
 
             $calendars[$field] = [
                 'json' => "{}",
@@ -73,9 +73,8 @@ class CalendarQuestions extends AbstractExternalModule
                 $variable = $settings['question-variable-name'][$index][$qindex] ?? null;
                 $type = $settings['question-type'][$index][$qindex] ?? null;
 
-                if (empty($variable) || empty($question) || empty($type)) {
+                if (empty($variable) || empty($question) || empty($type))
                     continue;
-                }
 
                 $event = $settings['question-branch-event'][$index][$qindex] ?? null;
                 $var = $settings['question-branch-variable'][$index][$qindex] ?? null;
@@ -121,9 +120,8 @@ class CalendarQuestions extends AbstractExternalModule
                 $startoffset = $settings['start-offset'][$index][$qindex] ?? null;
                 $endoffset = $settings['end-offset'][$index][$qindex] ?? null;
 
-                if (empty($startVar) || empty($endEvent) || empty($endVar) || empty($startEvent)) {
+                if (empty($startVar) || empty($endEvent) || empty($endVar) || empty($startEvent))
                     continue;
-                }
 
                 $start = null;
                 $end = null;
@@ -178,16 +176,7 @@ class CalendarQuestions extends AbstractExternalModule
         }
 
         if (!empty($calendars)) {
-            $templateRaw = file_get_contents(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'template.html');
-            $parts = explode("##", $templateRaw);
-            $templateKeys = ["td", "btn", "btnLink", "btnGroup", "calendar", "stats"];
-            $template = [];
-            foreach ($templateKeys as $tIdx => $tKey) {
-                $template[$tKey] = $parts[$tIdx] ?? '';
-            }
-
             $this->loadSettings([
-                "template" => $template,
                 "config" => $calendars
             ]);
             $this->includeLibraries();
@@ -211,23 +200,23 @@ class CalendarQuestions extends AbstractExternalModule
             $notes_fields = [];
             $dd = REDCap::getDataDictionary('array');
             foreach ($dd as $field_name => $field_attributes) {
-                if ($field_attributes['field_type'] == "notes") {
+                if ($field_attributes['field_type'] == "notes")
                     $notes_fields[] = $field_name;
-                }
             }
 
-            $used_fields = array_filter($this->getProjectSetting('name') ?? []);
+            $projectId = $this->getProjectId();
+            $used_fields = array_filter($this->getProjectSetting('name', $projectId) ?? []);
             $structured = [];
             if (!empty($used_fields)) {
                 $used_notes = array_intersect($used_fields, $notes_fields);
                 if (!empty($used_notes)) {
-                    $projectId = $this->getProjectId();
                     if ($projectId) {
                         $params = array_merge([$projectId], $used_notes);
                         $placeholders = implode(',', array_fill(0, count($used_notes), '?'));
+                        $dataTable = method_exists('REDCap', 'getDataTable') ? REDCap::getDataTable($projectId) : 'redcap_data';
                         $result = $this->query(
                             "SELECT record, field_name, CHAR_LENGTH(value) AS val_len 
-                             FROM redcap_data 
+                             FROM $dataTable 
                              WHERE project_id = ? AND field_name IN ($placeholders) AND value IS NOT NULL AND value != ''",
                             $params
                         );
@@ -267,7 +256,7 @@ class CalendarQuestions extends AbstractExternalModule
     */
     private function includeJs($path)
     {
-        echo "<script src='{$this->getUrl('js/' . $path)}'></script>";
+        echo "<script src='{$this->getUrl('js/' .$path)}'></script>";
     }
 
     /*
