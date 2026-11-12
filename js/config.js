@@ -4,8 +4,9 @@ $(document).ready(function () {
     let $modal = $('#external-modules-configure-modal');
     let module = ExternalModules.UWMadison.CalendarQuestions;
 
+    module.metrics = module.metrics || {};
     Object.keys(module.metrics).forEach(field => {
-        module.metrics[field] = Object.entries(module.metrics[field])
+        module.metrics[field] = Object.entries(module.metrics[field] || {})
             .sort(([, a], [, b]) => b - a)
             .reduce((r, [k, v]) => ({ ...r, [k]: v }), {});
     });
@@ -43,8 +44,8 @@ $(document).ready(function () {
                     $(el).remove();
             });
 
-            // // Add metrics to the target field row
-            $("tr[field=name").each((_, el) => {
+            // Add metrics to the target field row
+            $("tr[field=name]").each((_, el) => {
                 if ($(el).find(".table-em-stats").length)
                     return;
 

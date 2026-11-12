@@ -8,29 +8,37 @@ $(document).ready(() => {
     const compressLimit = Math.pow(2, 16) - 4000
 
     /*
-    Show the out of space pop-up message
+    Safe local empty checker
+    */
+    const isEmpty = (val) => {
+        return val === undefined || val === null || val === "" || (Array.isArray(val) && val.length === 0)
+    }
+
+    /*
+    Show the out of space pop-up message (survey-safe)
     */
     const outOfSpaceWarning = () => {
-        Swal.fire({
-            title: "Space Issue!",
-            text: "The Calendar Question field on this page is nearly out of space. Consider enabling compression in the EM settings.",
-            icon: "warning"
-        });
+        if (typeof Swal !== 'undefined' && Swal.fire) {
+            Swal.fire({
+                title: "Space Issue!",
+                text: "The Calendar Question field on this page is nearly out of space. Consider enabling compression in the EM settings.",
+                icon: "warning"
+            })
+        } else {
+            alert("The Calendar Question field on this page is nearly out of space. Consider enabling compression in the EM settings.")
+        }
     }
 
     /*
     Parse and load onto the screen data for a specific calendar and month
     */
     const loadCalendarJSON = (calendar, month, year) => {
-
         const $cal = $(`#${calendar}Calendar`)
 
         // Loop over data for the month
-        $.each(json[calendar], (date, vars) => {
+        $.each(json[calendar] || {}, (date, vars) => {
             $.each(vars, (varName, value) => {
-
-                // Skip days outside the month
-                if (varName[0] == "_" || (moment(date).format("MM") != month) || (moment(date).format("YYYY") != year)) return
+                if (varName[0] === "_" || (dayjs(date).format("MM") !== month) || (dayjs(date).format("YYYY") !== year)) return
                 let search = `.event-item[data-date=${date}] *[data-variable=${varName}]`
 
                 // Check for variables that were removed from the config
@@ -40,12 +48,10 @@ $(document).ready(() => {
                 // Enter data based on the format
                 if (["text", "int", "float"].includes(type)) {
                     $cal.find(search).val(value)
-                }
-                else if (!isEmpty(value) && type == "yesno") {
-                    $cal.find(search + `[value=${value}]`).attr('checked', true)
-                }
-                else if (!isEmpty(value) && value == '1' && type == "check") {
-                    $cal.find(search).attr('checked', true)
+                } else if (!isEmpty(value) && type === "yesno") {
+                    $cal.find(search + `[value=${value}]`).prop('checked', true)
+                } else if (!isEmpty(value) && value === '1' && type === "check") {
+                    $cal.find(search).prop('checked', true)
                 }
             })
             colorDay(calendar, date, vars)
@@ -56,13 +62,18 @@ $(document).ready(() => {
     Show the daily questions for a calendar on a date
     */
     const showDateQuestions = (calendar, ymd) => {
-        const date = moment(ymd)
+        const date = dayjs(ymd)
         const $cal = $(`#${calendar}Calendar`)
         $cal.find(`.event-item`).hide()
-        if (!module.config[calendar].noFuture || (moment().diff(date, 'days') > 0)) {
+
+        if (!module.config[calendar].noFuture || (dayjs().diff(date, 'day') > 0)) {
             $cal.find(`.event-item[data-date=${date.format('YYYY-MM-DD')}]`).show()
             let hideExcludes = excludes[calendar][ymd] || []
             hideExcludes.forEach(variable => {
+                // Issue #11: If alwaysShowData is enabled and field already has data, do not hide it
+                if (module.config[calendar].alwaysShowData && !isEmpty(json[calendar]?.[ymd]?.[variable])) {
+                    return
+                }
                 $cal.find(`*[data-variable=${variable}]`).parent().hide()
             })
         }
@@ -71,7 +82,7 @@ $(document).ready(() => {
     }
 
     /*
-    Save a new value for a varaible on a date, in a specific calendar 
+    Save a new value for a variable on a date in a specific calendar
     */
     const saveCalendarJSON = (calendar) => {
         const tmp = JSON.stringify(json[calendar])
@@ -85,18 +96,14 @@ $(document).ready(() => {
     }
 
     /*
-    Review a specific date on a calendar to determine if all needed
-    data has been collected or not. If no date is specified then the
-    currently highlighted date is used and the day is recolored to
-    red or green.
+    Review a specific date on a calendar to determine if all needed data has been collected
     */
     const updateDayComplete = (calendar, updateColor, ymd) => {
-
         let $today = $(`#${calendar}Calendar .clndr-grid .today`)
         if (!$today.length && !ymd) return
-        ymd = ymd || $today.children().data('date').trim()
+        ymd = ymd || $today.find('.day-number').data('date')?.toString().trim()
 
-        if (!json[calendar][ymd]) return
+        if (!json[calendar] || !json[calendar][ymd]) return
 
         const start_complete = json[calendar][ymd]['_complete']
         const start_partial = json[calendar][ymd]['_partial']
@@ -105,11 +112,10 @@ $(document).ready(() => {
 
         $.each(activeQuestions[calendar][ymd] || [], (_, varName) => {
             const question = module.config[calendar].questions[varName]
-            if (!question || question.type == 'check')
-                return
+            if (!question || question.type === 'check') return
 
             const value = json[calendar][ymd][varName]
-            if (value === undefined || value === null || value.toString() == "") {
+            if (value === undefined || value === null || value.toString() === "") {
                 isComplete = false
             } else {
                 isPartial = true
@@ -119,42 +125,41 @@ $(document).ready(() => {
         json[calendar][ymd]['_complete'] = isComplete ? 1 : 0
         json[calendar][ymd]['_partial'] = isPartial ? 1 : 0
 
-        if (start_complete != json[calendar][ymd]['_complete'] || start_partial != json[calendar][ymd]['_partial'])
+        if (start_complete !== json[calendar][ymd]['_complete'] || start_partial !== json[calendar][ymd]['_partial']) {
             updateStats(calendar, ymd)
+        }
 
-        if (updateColor)
+        if (updateColor) {
             colorDay(calendar, ymd, json[calendar][ymd])
+        }
     }
 
     /*
     Update the color of the day on the calendar's display for a given day
     */
     const colorDay = (calendar, ymd, data) => {
-        const newClass = data['_complete'] ? 'day-complete' : data['_partial'] ? 'day-partial' : 'day-incomplete'
+        const newClass = data['_complete'] ? 'day-complete' : (data['_partial'] ? 'day-partial' : 'day-incomplete')
         const $cal = $(`#${calendar}Calendar`)
         $cal.find(`.calendar-day-${ymd}`).removeClass('day-complete day-incomplete day-partial')
-        if (module.config[calendar].noFuture && (moment().diff(moment(ymd, 'YYYY-MM-DD'), 'days') <= 0)) return
+        if (module.config[calendar].noFuture && (dayjs().diff(dayjs(ymd), 'day') <= 0)) return
         $cal.find(`.calendar-day-${ymd}`).addClass(newClass)
     }
 
     /*
-    Event listener for the Mark all Button. Marks all variables in calendar for given month as value
+    Event listener for Mark All Button
     */
     const calMarkAllAsValue = (calendar, variable, value) => {
-
-        const today = $(`#${calendar}Calendar .clndr-grid .today`).children().data('date').trim().split('-')
-        const month = today[1]
-        const year = today[0]
+        const todayDate = $(`#${calendar}Calendar .clndr-grid .today`).find('.day-number').data('date')?.toString().trim().split('-')
+        if (!todayDate || todayDate.length < 2) return
+        const year = todayDate[0]
+        const month = todayDate[1]
 
         $.each(json[calendar], (date, data) => {
-            if (date.split('-')[1] != month || date.split('-')[0] != year || data['_complete'] == 1)
-                return
-            if (excludes[calendar][date] && excludes[calendar][date].includes(variable))
-                return
-            if (filters[calendar][date] && filters[calendar][date].includes(variable))
-                return
-            if (module.config[calendar].noFuture && (moment().diff(date, 'days') < 0))
-                return
+            if (date.split('-')[1] !== month || date.split('-')[0] !== year || data['_complete'] === 1) return
+            if (excludes[calendar][date] && excludes[calendar][date].includes(variable)) return
+            if (filters[calendar][date] && filters[calendar][date].includes(variable)) return
+            if (module.config[calendar].noFuture && (dayjs().diff(dayjs(date), 'day') < 0)) return
+
             json[calendar][date][variable] = value
             updateDayComplete(calendar, true, date)
         })
@@ -164,25 +169,20 @@ $(document).ready(() => {
     }
 
     /*
-    One time insert of mark all buttons
+    Insert Mark All buttons
     */
     const insertMarkAllButton = (calendar, settings) => {
-
         const $cal = $(`#${calendar}Calendar`)
         $cal.append(module.template.btnGroup)
         const $dropDown = $cal.find('.markAllButtonGroup .dropdown-menu')
 
-        $.each(settings['buttons'], (_, btn) => {
-
-            // Insert the template button AND template link on button group
+        $.each(settings['buttons'] || [], (_, btn) => {
             $cal.append(module.template.btn.replace('TEXT', btn.text).replace(btn.tooltip ? 'TOOLTIP' : `title="TOOLTIP"`, btn.tooltip ? btn.tooltip : ""))
-            $cal.find('.markAllButtonGroup .dropdown-menu').append(module.template.btnLink.replace('TEXT', btn.text).replace(btn.tooltip ? 'TOOLTIP' : `title="TOOLTIP"`, btn.tooltip ? btn.tooltip : ""))
+            $dropDown.append(module.template.btnLink.replace('TEXT', btn.text).replace(btn.tooltip ? 'TOOLTIP' : `title="TOOLTIP"`, btn.tooltip ? btn.tooltip : ""))
 
-            // Find the target and enable tooltip
             const $target = $cal.find('button')
-            if (btn.tooltip) $target.last().tooltip()
+            if (btn.tooltip && $.fn.tooltip) $target.last().tooltip()
 
-            // Setup event listener
             const markfunc = () => calMarkAllAsValue(calendar, btn.variable, btn.value)
             $target.last().on('click', markfunc)
             $dropDown.find('.dropdown-item').last().on('click', markfunc)
@@ -190,11 +190,9 @@ $(document).ready(() => {
     }
 
     /*
-    Update which mark-all buttons are shown based on what is currently displayed.
+    Update which mark-all buttons are shown based on what is currently displayed
     */
     const updateMarkAllButtons = (calendar) => {
-
-        // Setup and show all buttons
         const $cal = $(`#${calendar}Calendar`)
         const $dropDown = $cal.find('.markAllButtonGroup .dropdown-menu')
         $cal.parent().find(".markAllButton").show()
@@ -202,23 +200,20 @@ $(document).ready(() => {
         $cal.find('.markAllButtonGroup .dropdown-item').show()
         let btnCount = 0
 
-        $.each(module.config[calendar].buttons, (_, btn) => {
-
+        $.each(module.config[calendar].buttons || [], (_, btn) => {
             let $target = $cal.find(`.markAllButton:contains(${btn.text})`)
             let $ddTarget = $dropDown.find(`.dropdown-item:contains(${btn.text})`)
 
-            // Hide buttons that aren't needed
             if (!$cal.find(`[data-variable=${btn.variable}]:visible`).length) {
                 $target.hide()
                 $ddTarget.hide()
             } else {
-                // Hacky css stuff, don't hate me
                 $target.css('transform', `translateY(${-35 * btnCount}px)`)
                 btnCount += 1
             }
         })
 
-        if (btnCount > 2) { // Currently hard coded to 2 max 
+        if (btnCount > 2) {
             $cal.parent().find(".markAllButton").hide()
             $cal.find('.markAllButtonGroup').show()
         }
@@ -228,15 +223,15 @@ $(document).ready(() => {
     Setup saving on input change for a calendar
     */
     const setupSaving = (calendar) => {
-
         const $cal = $(`#${calendar}Calendar`)
-
-        //Setup every save back to JSON
-        $cal.find("[class^=event-item-input-]").on('click change', (event) => {
+        $cal.off('click change', "[class^=event-item-input-]").on('click change', "[class^=event-item-input-]", (event) => {
             const $target = $(event.currentTarget)
-            const newVal = $target.prop('type') == "checkbox" ? ($target.is(':checked') ? '1' : '0') : $target.val()
-            const ymd = $target.parent().data('date')
+            const newVal = $target.prop('type') === "checkbox" ? ($target.is(':checked') ? '1' : '0') : $target.val()
+            const ymd = $target.closest('.event-item').data('date')
             const variable = $target.data('variable')
+            if (!ymd || !variable) return
+
+            json[calendar][ymd] = json[calendar][ymd] || {}
             json[calendar][ymd][variable] = newVal
             updateDayComplete(calendar, false, ymd)
             saveCalendarJSON(calendar)
@@ -244,24 +239,25 @@ $(document).ready(() => {
     }
 
     /*
-    Setup validation for a calendar, prevent junk data
+    Setup validation for a calendar to prevent junk data
     */
     const setupValidation = (calendar) => {
         const $cal = $(`#${calendar}Calendar`)
 
-        // Only int and float have any validation on them
-        $cal.find(`.event-item-input-int`).on("keypress keyup blur", (event) => {
+        $cal.find(`.event-item-input-int`).off("keypress keyup blur").on("keypress keyup blur", (event) => {
             const $target = $(event.currentTarget)
-            const isNeg = (event.which == 45) || ($target.val().startsWith("-"))
-            $target.val((isNeg ? "-" : "") + $target.val().replace(/[^0-9]/, ""))
-            if ((event.which < 48 || event.which > 57))
+            const isNeg = (event.which === 45) || ($target.val().startsWith("-"))
+            $target.val((isNeg ? "-" : "") + $target.val().replace(/[^0-9]/g, ""))
+            if (event.which !== 45 && (event.which < 48 || event.which > 57) && event.which > 31) {
                 event.preventDefault()
+            }
         })
-        $cal.find(`.event-item-input-float`).on("keypress keyup blur", (event) => {
+
+        $cal.find(`.event-item-input-float`).off("keypress keyup blur").on("keypress keyup blur", (event) => {
             const $target = $(event.currentTarget)
-            const isNeg = (event.which == 45) || ($target.val().startsWith("-"))
-            $target.val((isNeg ? "-" : "") + $target.val().replace(/[^0-9\.]/g, ""))
-            if ((event.which != 46 || $target.val().indexOf('.') != -1) && (event.which < 48 || event.which > 57)) {
+            const isNeg = (event.which === 45) || ($target.val().startsWith("-"))
+            $target.val((isNeg ? "-" : "") + $target.val().replace(/[^0-9.]/g, ""))
+            if (event.which !== 45 && (event.which !== 46 || $target.val().indexOf('.') !== -1) && (event.which < 48 || event.which > 57) && event.which > 31) {
                 event.preventDefault()
             }
         })
@@ -278,8 +274,12 @@ $(document).ready(() => {
             "ArrowDown": 7
         }
         if (!Object.keys(arrowMap).includes(event.key)) return
-        const date = moment($(".clndr-grid .today").children().data('date'))
-        const newDate = moment(date).add(arrowMap[event.key], 'days')
+
+        const $activeDay = $(".clndr-grid .today").find('.day-number')
+        if (!$activeDay.length) return
+
+        const date = dayjs($activeDay.data('date'))
+        const newDate = date.add(arrowMap[event.key], 'day')
         const $el = $(`.calendar-day-${newDate.format("YYYY-MM-DD")}`)
         if ($el.length) {
             $el.click()
@@ -293,9 +293,14 @@ $(document).ready(() => {
     */
     const applyReplaceFilter = (calendar, ymd) => {
         const filter = filters[calendar]
-        if (!filter[ymd] || !filter[ymd].length) return
+        if (!filter || !filter[ymd] || !filter[ymd].length) return
         const $cal = $(`#${calendar}Calendar`)
+
         filter[ymd].forEach(varName => {
+            // Issue #11: If alwaysShowData is enabled and field already has data, do not hide it
+            if (module.config[calendar].alwaysShowData && !isEmpty(json[calendar]?.[ymd]?.[varName])) {
+                return
+            }
             $cal.find(`[data-variable=${varName}]`).parent().hide()
         })
     }
@@ -305,14 +310,15 @@ $(document).ready(() => {
     */
     const setDate = (calendar, ymd) => {
         updateDayComplete(calendar, true)
-        $(".today").removeClass('today')
-        $(`.calendar-day-${ymd}`).addClass('today')
+        const $cal = $(`#${calendar}Calendar`)
+        $cal.find(".today").removeClass('today')
+        $cal.find(`.calendar-day-${ymd}`).addClass('today')
         showDateQuestions(calendar, ymd)
         saveCalendarJSON(calendar)
     }
 
     const isCompressed = (string) => {
-        return string.startsWith("H4sIA")
+        return typeof string === "string" && string.startsWith("H4sIA")
     }
 
     const compress = async (string) => {
@@ -344,11 +350,13 @@ $(document).ready(() => {
     const updateStats = (calendar, ymd) => {
         if (!module.config[calendar].stats) return
         const $t = $(`#${calendar}-tr`).next().find("table")
-        const data = json[calendar]
-        const start = moment(ymd, 'YYYY-MM-DD').startOf('month').subtract(11, 'month')
-        const end = moment(ymd, 'YYYY-MM-DD').endOf('month')
-        const thisMonth = moment(ymd, 'YYYY-MM-DD').startOf('month').format('YYYY-MM-DD')
-        const thisTrimester = moment(ymd, 'YYYY-MM-DD').subtract(90, 'day').format('YYYY-MM-DD')
+        const data = json[calendar] || {}
+        const baseDate = dayjs(ymd)
+        const start = baseDate.startOf('month').subtract(11, 'month')
+        const end = baseDate.endOf('month')
+        const thisMonth = baseDate.startOf('month').format('YYYY-MM-DD')
+        const thisTrimester = baseDate.subtract(90, 'day').format('YYYY-MM-DD')
+
         let totals = {
             month: 0,
             trimester: 0,
@@ -360,30 +368,27 @@ $(document).ready(() => {
             trimester_complete: 0,
             year_complete: 0,
         }
-        for (let date of moment.range(start, end).by('days')) {
-            date = date.format('YYYY-MM-DD')
-            if (!data[date])
-                continue
+
+        for (let d = start; d.isBefore(end) || d.isSame(end, 'day'); d = d.add(1, 'day')) {
+            const date = d.format('YYYY-MM-DD')
+            if (!data[date]) continue
+
             totals.year += 1
-            if (date >= thisMonth)
-                totals.month += 1
-            if (date >= thisTrimester)
-                totals.trimester += 1
-            if (data[date]._complete == 1) {
+            if (date >= thisMonth) totals.month += 1
+            if (date >= thisTrimester) totals.trimester += 1
+
+            if (data[date]._complete === 1) {
                 totals.year_complete += 1
-                if (date >= thisMonth)
-                    totals.month_complete += 1
-                if (date >= thisTrimester)
-                    totals.trimester_complete += 1
+                if (date >= thisMonth) totals.month_complete += 1
+                if (date >= thisTrimester) totals.trimester_complete += 1
             }
-            if (data[date]._partial == 1) {
+            if (data[date]._partial === 1) {
                 totals.year_partial += 1
-                if (date >= thisMonth)
-                    totals.month_partial += 1
-                if (date >= thisTrimester)
-                    totals.trimester_partial += 1
+                if (date >= thisMonth) totals.month_partial += 1
+                if (date >= thisTrimester) totals.trimester_partial += 1
             }
         }
+
         $t.find(".a1").text(`${totals.month_partial} / ${totals.month}`)
         $t.find(".a2").text(`${totals.trimester_partial} / ${totals.trimester}`)
         $t.find(".a3").text(`${totals.year_partial} / ${totals.year}`)
@@ -393,34 +398,157 @@ $(document).ready(() => {
     }
 
     /*
+    Native, lightweight replacement for CLNDR (zero external dependencies)
+    Renders identical DOM hierarchy and CSS classes
+    */
+    const renderCalendarGrid = ($target, options) => {
+        let currentMonthDate = dayjs().startOf('month')
+        const events = options.events || []
+        const eventDates = new Set(events.map(e => e.date))
+
+        const render = () => {
+            const monthName = currentMonthDate.format('MMMM')
+            const yearName = currentMonthDate.format('YYYY')
+            const firstDayOfWeek = currentMonthDate.day() // 0 = Sunday
+            const gridStartDate = currentMonthDate.subtract(firstDayOfWeek, 'day')
+
+            // Build Controls
+            let html = `
+            <div class="clndr-controls">
+                <div class="clndr-previous-button">‹</div>
+                <div class="month">${monthName} ${yearName}</div>
+                <div class="clndr-next-button">›</div>
+            </div>
+            <div class="clndr-grid">
+                <div class="days-of-the-week clearfix">
+                    <div class="header-day">Sun</div>
+                    <div class="header-day">Mon</div>
+                    <div class="header-day">Tue</div>
+                    <div class="header-day">Wed</div>
+                    <div class="header-day">Thu</div>
+                    <div class="header-day">Fri</div>
+                    <div class="header-day">Sat</div>
+                </div>
+                <div class="days clearfix">`
+
+            // 6 rows * 7 days = 42 cells (forceSixRows equivalent)
+            for (let i = 0; i < 42; i++) {
+                const day = gridStartDate.add(i, 'day')
+                const ymd = day.format('YYYY-MM-DD')
+                const isAdjacent = day.month() !== currentMonthDate.month()
+                const isToday = ymd === dayjs().format('YYYY-MM-DD')
+                const hasEvent = eventDates.has(ymd)
+
+                let classes = ['day', `calendar-day-${ymd}`]
+                if (isAdjacent) {
+                    classes.push('adjacent-month')
+                } else {
+                    classes.push(`my-${ymd}`)
+                }
+                if (isToday) classes.push('today')
+                if (hasEvent) classes.push('event')
+
+                html += `<div class="${classes.join(' ')}" id="calendar-day-${ymd}">
+                    <span class="day-number" data-date="${ymd}">${day.date()}</span>
+                </div>`
+            }
+
+            html += `</div></div>`
+
+            // Build Question Event Listing
+            const eventsThisMonth = events.filter(e => {
+                const ed = dayjs(e.date)
+                return ed.month() === currentMonthDate.month() && ed.year() === currentMonthDate.year()
+            })
+
+            html += `<div class="event-listing">
+                <div class="event-listing-title">Questions</div>`
+
+            eventsThisMonth.forEach(event => {
+                const isFlex = event.type === "check" ? ' style="display:flex"' : ''
+                html += `<div class="event-item"${isFlex} data-date="${event.date}">`
+
+                if (event.type === "check") {
+                    html += `<input name="${event.variable}-${event.date}-checkbox" class="event-item-input-checkbox" type="checkbox" data-variable="${event.variable}">`
+                }
+
+                html += `<div class="event-item-question">${event.question}</div>`
+
+                if (["text", "float", "int"].includes(event.type)) {
+                    html += `<textarea rows="1" class="event-item-input-${event.type}" data-variable="${event.variable}"></textarea>`
+                } else if (event.type === "yesno") {
+                    html += `<input name="${event.variable}-${event.date}-radio" class="event-item-input-yesno" type="radio" data-variable="${event.variable}" value="1"><span class="event-item-input-label">Yes</span>`
+                    html += `<input name="${event.variable}-${event.date}-radio" class="event-item-input-yesno" type="radio" data-variable="${event.variable}" value="0"><span class="event-item-input-label">No</span>`
+                }
+
+                html += `</div>`
+            })
+
+            html += `</div>`
+
+            $target.html(html)
+
+            // Attach Month navigation handlers
+            $target.find('.clndr-previous-button').on('click', () => {
+                currentMonthDate = currentMonthDate.subtract(1, 'month').startOf('month')
+                render()
+                if (options.clickEvents && options.clickEvents.onMonthChange) {
+                    options.clickEvents.onMonthChange(currentMonthDate)
+                }
+            })
+
+            $target.find('.clndr-next-button').on('click', () => {
+                currentMonthDate = currentMonthDate.add(1, 'month').startOf('month')
+                render()
+                if (options.clickEvents && options.clickEvents.onMonthChange) {
+                    options.clickEvents.onMonthChange(currentMonthDate)
+                }
+            })
+
+            // Attach Day click handlers
+            $target.find('.clndr-grid .day').on('click', function () {
+                const dateYmd = $(this).find('.day-number').data('date')
+                if (!dateYmd) return
+                const clickedDate = dayjs(dateYmd)
+                if (options.clickEvents && options.clickEvents.click) {
+                    options.clickEvents.click({
+                        date: clickedDate,
+                        element: this
+                    })
+                }
+            })
+        }
+
+        render()
+
+        if (typeof options.ready === 'function') {
+            options.ready()
+        }
+    }
+
+    /*
     One time setup for the calendar, run when doc is ready
     */
     const setup = () => {
-        // Simple setup
         document.onkeydown = arrowNavigation
-        window['moment-range'].extendMoment(moment)
 
-        // Loop over all config
-        $.each(module.config, async (calName, calSettings) => {
-
-            // Prep the area for the calendar
-            if ($(`[name=${calName}]:visible`).length == 0) return
+        $.each(module.config || {}, async (calName, calSettings) => {
+            if ($(`[name=${calName}]:visible`).length === 0) return
             $(`#${calName}-tr td`).hide()
             $(`#${calName}-tr`).append(module.template.td.replace('CALNAME', `${calName}Calendar`))
 
-            // Insert stats row
-            if (calSettings.stats)
+            if (calSettings.stats) {
                 $(`#${calName}-tr`).after(module.template.stats)
+            }
 
-            // Load JSON from the text area into temp Json var
-            let tmp = $(`textarea[name=${calName}]`).val()
+            let tmp = $(`textarea[name=${calName}]`).val() || ""
             const tmpLength = tmp.length
             tmp = isCompressed(tmp) ? await decompress(tmp) : tmp
             tmp = isEmpty(tmp) ? {} : JSON.parse(tmp)
 
-            // Show a warning if the JSON is too large
-            if (!calSettings.compress && tmpLength > compressLimit)
+            if (!calSettings.compress && tmpLength > compressLimit) {
                 outOfSpaceWarning()
+            }
 
             let events = []
             let unique = {}
@@ -428,50 +556,43 @@ $(document).ready(() => {
             excludes[calName] = {}
             activeQuestions[calName] = {}
 
-            // Build out the JSON with any new range info we might have
-            $.each(calSettings.range, (_, rangeObj) => {
-
-                // Skip if start/end ranges don't exist yet
+            $.each(calSettings.range || [], (_, rangeObj) => {
                 if (!rangeObj.start || !rangeObj.end) return
 
-                // Loop over every day in the range
-                for (let day of moment.range(rangeObj.start, rangeObj.end).by('days')) {
-
+                for (let day = dayjs(rangeObj.start); day.isBefore(rangeObj.end) || day.isSame(rangeObj.end, 'day'); day = day.add(1, 'day')) {
                     const date = day.format('YYYY-MM-DD')
                     filters[calName][date] = filters[calName][date] || []
                     excludes[calName][date] = excludes[calName][date] || []
                     unique[date] = unique[date] || []
                     activeQuestions[calName][date] = activeQuestions[calName][date] || []
 
-                    // Init Json structure
-                    tmp[date] ??= {}
-                    tmp[date]["_complete"] ??= 0
-                    tmp[date]["_partial"] ??= 0
+                    tmp[date] = tmp[date] || {}
+                    tmp[date]["_complete"] = tmp[date]["_complete"] ?? 0
+                    tmp[date]["_partial"] = tmp[date]["_partial"] ?? 0
 
-                    if (rangeObj.exclude.length)
+                    if (rangeObj.exclude && rangeObj.exclude.length) {
                         excludes[calName][date].push(...rangeObj.exclude)
+                    }
 
-                    // Undisclosed hack to allow for a variable to be included in the calendar even if it is excluded in the range.
-                    // This is done by prefixing the variable with a "!" in the exclude array.
-                    rangeObj.exclude.forEach(variable => {
-                        if (!variable.startsWith("!"))
-                            return
+                    (rangeObj.exclude || []).forEach(variable => {
+                        if (!variable.startsWith("!")) return
                         const includeVar = variable.substring(1)
-                        excludes[calName][date] = excludes[calName][date].filter(v => v != variable && v != includeVar)
+                        excludes[calName][date] = excludes[calName][date].filter(v => v !== variable && v !== includeVar)
                     })
 
-                    // Flip through all the questions for today
-                    $.each(calSettings.questions, (variable, question) => {
+                    $.each(calSettings.questions || {}, (variable, question) => {
+                        const hasExistingData = !isEmpty(tmp[date][variable])
 
                         if (unique[date].includes(variable) ||
-                            (isEmpty(tmp[date][variable]) && excludes[calName][date].includes(variable)))
+                            (!hasExistingData && excludes[calName][date].includes(variable))) {
                             return
+                        }
 
-                        if (!question.logic)
-                            return
+                        if (!question.logic) return
 
-                        if (question.replace.length)
+                        if (question.replace && question.replace.length) {
                             filters[calName][date].push(...question.replace)
+                        }
 
                         unique[date].push(variable)
                         activeQuestions[calName][date].push(variable)
@@ -488,49 +609,43 @@ $(document).ready(() => {
             })
 
             $.each(activeQuestions[calName], (date, variables) => {
-                activeQuestions[calName][date] = variables.filter(variable =>
-                    !filters[calName][date].includes(variable) &&
-                    !excludes[calName][date].includes(variable)
-                )
+                activeQuestions[calName][date] = variables.filter(variable => {
+                    // Issue #11: If alwaysShowData is enabled and data exists, retain in active questions
+                    if (calSettings.alwaysShowData && !isEmpty(tmp[date]?.[variable])) {
+                        return true
+                    }
+                    return !filters[calName][date].includes(variable) && !excludes[calName][date].includes(variable)
+                })
             })
 
-            // Sort by question index for consistent display
             events.sort((a, b) => (b.index < a.index) ? 1 : -1)
             json[calName] = tmp
 
-            // Init the CLNDR
             let $cal = $(`#${calName}Calendar`)
-            $cal.clndr({
-                template: module.template.calendar,
+            renderCalendarGrid($cal, {
                 events: events,
-                forceSixRows: true,
-
-                // Runs ONCE when the calendar is rendered
                 ready: () => {
                     insertMarkAllButton(calName, calSettings)
                     updateMarkAllButtons(calName)
-                    showDateQuestions(calName, moment().format("YYYY-MM-DD"))
-                    loadCalendarJSON(calName, moment().format("MM"), moment().format("YYYY"))
+                    showDateQuestions(calName, dayjs().format("YYYY-MM-DD"))
+                    loadCalendarJSON(calName, dayjs().format("MM"), dayjs().format("YYYY"))
                     setupSaving(calName)
                     setupValidation(calName)
-                    updateStats(calName, moment().format("YYYY-MM-DD"))
+                    updateStats(calName, dayjs().format("YYYY-MM-DD"))
                 },
-
                 clickEvents: {
-
-                    // Runs when a new date is clicked (or arrowed to)
                     click: (target) => {
-                        const date = moment($(".clndr-grid .today").children().data('date'))
-                        if (target.date.format("MM") == date.format("MM")) {
+                        const $todaySpan = $cal.find(".clndr-grid .today").find('.day-number')
+                        const activeYmd = $todaySpan.length ? $todaySpan.data('date') : dayjs().format("YYYY-MM-DD")
+                        const activeDate = dayjs(activeYmd)
+                        if (target.date.format("MM") === activeDate.format("MM")) {
                             setDate(calName, target.date.format("YYYY-MM-DD"))
                         }
                     },
-
-                    // Runs on every month change
                     onMonthChange: (firstOfMonth) => {
                         let firstValidDay = $cal.find(".day.event span").first()
-                        firstValidDay = moment(firstValidDay ? firstValidDay.data('date') : firstOfMonth)
-                        if (firstOfMonth.format("MM") != firstValidDay.format("MM")) {
+                        firstValidDay = dayjs(firstValidDay.length && firstValidDay.data('date') ? firstValidDay.data('date') : firstOfMonth)
+                        if (firstOfMonth.format("MM") !== firstValidDay.format("MM")) {
                             firstValidDay = firstOfMonth
                         }
                         setDate(calName, firstValidDay.format("YYYY-MM-DD"))
@@ -545,5 +660,5 @@ $(document).ready(() => {
         })
     }
 
-    $(document).ready(setup)
+    setup()
 })

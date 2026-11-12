@@ -12,7 +12,6 @@ class CalendarQuestions extends AbstractExternalModule
     */
     public function redcap_every_page_top($project_id)
     {
-        // Custom Config page
         if ($this->isPage('ExternalModules/manager/project.php') && $project_id) {
             $this->loadSettings([], true);
             $this->includeCSS();
@@ -21,67 +20,88 @@ class CalendarQuestions extends AbstractExternalModule
     }
 
     /*
-    Primary Redcap Hook, check if the form has a field from our config on it
-    and if so gather all configuration and pass down to JS
+    Redcap Data Entry Form Hook
     */
     public function redcap_data_entry_form($project_id, $record, $instrument, $event_id)
     {
+        $this->renderCalendarOnFormOrSurvey($project_id, $record, $instrument, $event_id);
+    }
 
-        $calNames = $this->getProjectSetting('name') ?? [];
-        $settings = $this->getProjectSettings();
+    /*
+    Redcap Survey Page Hook
+    */
+    public function redcap_survey_page($project_id, $record, $instrument, $event_id, $group_id, $survey_hash, $response_id, $repeat_instance)
+    {
+        $this->renderCalendarOnFormOrSurvey($project_id, $record, $instrument, $event_id);
+    }
+
+    /*
+    Primary render handler for both data entry forms and surveys
+    */
+    private function renderCalendarOnFormOrSurvey($project_id, $record, $instrument, $event_id)
+    {
+        $settings = $this->getProjectSettings($project_id);
         $fields = REDCap::getFieldNames($instrument);
+        if (empty($fields) || empty($settings['name'])) return;
 
-        // Intersection of targets and all fields on the instrument
-        $targets = array_filter($fields, function ($f) use ($calNames) {
-            return in_array($f, $calNames);
-        });
+        $calendars = [];
+        $calNames = $settings['name'] ?? [];
 
-        // Loop over all calendars we need to create
-        foreach ($targets as $field) {
+        foreach ($calNames as $index => $field) {
+            if (empty($field) || !in_array($field, $fields)) continue;
 
-            $index = array_search($field, $calNames);
+            // Issue #3: Check event scoping if specified
+            $calEvent = $settings['event'][$index] ?? null;
+            if (!empty($calEvent) && !empty($event_id) && $calEvent != $event_id) {
+                continue;
+            }
+
             $calendars[$field] = [
                 'json' => "{}",
-                'noFuture' => $settings['nofuture'][$index],
-                'stats' => $settings['stats'][$index],
-                'compress' => $settings['compress'][$index],
+                'noFuture' => !empty($settings['nofuture'][$index]),
+                'stats' => !empty($settings['stats'][$index]),
+                'compress' => !empty($settings['compress'][$index]),
+                'alwaysShowData' => !empty($settings['always-show-data'][$index]),
                 'questions' => [],
                 'range' => [],
                 'buttons' => []
             ];
 
             // Grab calendar question settings
-            foreach ($settings['question'][$index] as $qindex => $question) {
-
-                // Required vars
-                $variable = $settings['question-variable-name'][$index][$qindex];
-                $type = $settings['question-type'][$index][$qindex];
+            $questions = $settings['question'][$index] ?? [];
+            foreach ($questions as $qindex => $question) {
+                $variable = $settings['question-variable-name'][$index][$qindex] ?? null;
+                $type = $settings['question-type'][$index][$qindex] ?? null;
 
                 if (empty($variable) || empty($question) || empty($type)) {
                     continue;
                 }
 
-                // Grab all other config
-                $event = $settings['question-branch-event'][$index][$qindex];
-                $var = $settings['question-branch-variable'][$index][$qindex];
-                $val = $settings['question-branch-value'][$index][$qindex];
-                $replace = array_filter(array_map('trim', explode(',', $settings['question-replace'][$index][$qindex])));
+                $event = $settings['question-branch-event'][$index][$qindex] ?? null;
+                $var = $settings['question-branch-variable'][$index][$qindex] ?? null;
+                $val = (string)($settings['question-branch-value'][$index][$qindex] ?? '');
+                $rawReplace = $settings['question-replace'][$index][$qindex] ?? '';
+                $replace = array_filter(array_map('trim', explode(',', $rawReplace)));
 
                 // Check branching logic
                 $branchLogicPass = false;
                 $branchingLogicEnabled = !empty($event) && !empty($var);
 
                 if ($branchingLogicEnabled) {
-                    $target = REDCap::getData($project_id, 'array', $record, $var, $event)[$record][$event][$var];
-                    if (substr($val, 0, 1) == "!") {
-                        $val = substr($val, 1);
-                        $branchLogicPass = $target != $val;
+                    $target = null;
+                    if (!empty($record)) {
+                        $targetData = REDCap::getData($project_id, 'array', $record, $var, $event);
+                        $target = $targetData[$record][$event][$var] ?? null;
+                    }
+
+                    if (substr($val, 0, 1) === "!") {
+                        $compVal = substr($val, 1);
+                        $branchLogicPass = ($target != $compVal);
                     } else {
-                        $branchLogicPass = $target == $val;
+                        $branchLogicPass = ($target == $val);
                     }
                 }
 
-                // Save settings 
                 $calendars[$field]['questions'][$variable] = [
                     'index' => $qindex,
                     'text' => $question,
@@ -93,40 +113,40 @@ class CalendarQuestions extends AbstractExternalModule
             }
 
             // Build out ranges based on settings
-            foreach ($settings['start-event'][$index] as $qindex => $startEvent) {
+            $startEvents = $settings['start-event'][$index] ?? [];
+            foreach ($startEvents as $qindex => $startEvent) {
+                $startVar = $settings['start-variable'][$index][$qindex] ?? null;
+                $endEvent = $settings['end-event'][$index][$qindex] ?? null;
+                $endVar = $settings['end-variable'][$index][$qindex] ?? null;
+                $startoffset = $settings['start-offset'][$index][$qindex] ?? null;
+                $endoffset = $settings['end-offset'][$index][$qindex] ?? null;
 
-                // Grab all the config
-                $startVar = $settings['start-variable'][$index][$qindex];
-                $endEvent = $settings['end-event'][$index][$qindex];
-                $endVar = $settings['end-variable'][$index][$qindex];
-                $startoffset = $settings['start-offset'][$index][$qindex];
-                $endoffset = $settings['end-offset'][$index][$qindex];
-
-                // Exit if we are missing any mandatory config
                 if (empty($startVar) || empty($endEvent) || empty($endVar) || empty($startEvent)) {
                     continue;
                 }
 
-                // Fetch start/end values
-                $seData = REDCap::getData($project_id, 'array', $record, [$startVar, $endVar], [$startEvent, $endEvent]);
-                $start = $seData[$record][$startEvent][$startVar];
-                $end = $seData[$record][$endEvent][$endVar];
+                $start = null;
+                $end = null;
 
-                // Explode any excluded values
-                $exclude = array_filter(array_map('trim', explode(',', $settings['range-exclude'][$index][$qindex])));
+                if (!empty($record)) {
+                    $seData = REDCap::getData($project_id, 'array', $record, [$startVar, $endVar], [$startEvent, $endEvent]);
+                    $start = $seData[$record][$startEvent][$startVar] ?? null;
+                    $end = $seData[$record][$endEvent][$endVar] ?? null;
+                }
 
-                // If using offsets then add those days to the date we got
+                $rawExclude = $settings['range-exclude'][$index][$qindex] ?? '';
+                $exclude = array_filter(array_map('trim', explode(',', $rawExclude)));
+
                 if (!empty($startoffset) && !empty($start)) {
-                    $startoffset = $startoffset[0] == '-' ? $startoffset : "+$startoffset";
+                    $startoffset = $startoffset[0] === '-' ? $startoffset : "+$startoffset";
                     $start = date('Y-m-d', strtotime("$start $startoffset days"));
                 }
                 if (!empty($endoffset) && !empty($end)) {
-                    $endoffset = $endoffset[0] == '-' ? $endoffset : "+$endoffset";
+                    $endoffset = $endoffset[0] === '-' ? $endoffset : "+$endoffset";
                     $end = date('Y-m-d', strtotime("$end $endoffset days"));
                 }
 
-                // Flip values if needed
-                if ($end < $start) {
+                if (!empty($start) && !empty($end) && $end < $start) {
                     $t = $end;
                     $end = $start;
                     $start = $t;
@@ -139,12 +159,12 @@ class CalendarQuestions extends AbstractExternalModule
                 ];
             }
 
-            // Build out any buttons
-            foreach ($settings['button-text'][$index] as $qindex => $buttonText) {
-
-                $tooltip = $settings['button-tooltip'][$index][$qindex];
-                $var = $settings['button-var'][$index][$qindex];
-                $val = $settings['button-val'][$index][$qindex];
+            // Build out mark all buttons
+            $buttonTexts = $settings['button-text'][$index] ?? [];
+            foreach ($buttonTexts as $qindex => $buttonText) {
+                $tooltip = $settings['button-tooltip'][$index][$qindex] ?? null;
+                $var = $settings['button-var'][$index][$qindex] ?? null;
+                $val = $settings['button-val'][$index][$qindex] ?? null;
 
                 if (!is_null($buttonText) && !is_null($var) && !is_null($val)) {
                     $calendars[$field]['buttons'][] = [
@@ -158,24 +178,29 @@ class CalendarQuestions extends AbstractExternalModule
         }
 
         if (!empty($calendars)) {
-            $template = file_get_contents(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'template.html');
-            $template = array_combine(["td", "btn", "btnLink", "btnGroup", "calendar", "stats"], explode("##", $template));
+            $templateRaw = file_get_contents(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'template.html');
+            $parts = explode("##", $templateRaw);
+            $templateKeys = ["td", "btn", "btnLink", "btnGroup", "calendar", "stats"];
+            $template = [];
+            foreach ($templateKeys as $tIdx => $tKey) {
+                $template[$tKey] = $parts[$tIdx] ?? '';
+            }
+
             $this->loadSettings([
                 "template" => $template,
                 "config" => $calendars
             ]);
-            $this->includeJSclndr();
+            $this->includeLibraries();
             $this->includeCSS();
             $this->includeJs('main.js');
         }
     }
 
     /*
-    Init our JS module global and populate with the prefix
+    Init JS module global and populate with settings
     */
     private function loadSettings($data = [], $loadFieldInfo = false)
     {
-        // Setup Redcap JS object
         $this->initializeJavascriptModuleObject();
         $this->tt_transferToJavascriptModuleObject();
         $data = array_merge($data, [
@@ -183,7 +208,6 @@ class CalendarQuestions extends AbstractExternalModule
         ]);
 
         if ($loadFieldInfo) {
-            // Grab valid notes fields
             $notes_fields = [];
             $dd = REDCap::getDataDictionary('array');
             foreach ($dd as $field_name => $field_attributes) {
@@ -192,44 +216,50 @@ class CalendarQuestions extends AbstractExternalModule
                 }
             }
 
-            // Grab existing data for metrics on notes fields
             $used_fields = array_filter($this->getProjectSetting('name') ?? []);
             $structured = [];
             if (!empty($used_fields)) {
                 $used_notes = array_intersect($used_fields, $notes_fields);
-                $rcdata = REDCap::getData('array', NULL, $used_notes);
-                foreach ($rcdata as $record => $events) {
-                    foreach ($events as $event => $fields) {
-                        foreach ($fields as $field => $value) {
-                            $a = $structured[$field]["str $record"] ?? 0;
-                            $b = strlen($value) / (2 << 15);
-                            $structured[$field]["str $record"] = $a > $b ? $a : $b;
+                if (!empty($used_notes)) {
+                    $projectId = $this->getProjectId();
+                    if ($projectId) {
+                        $params = array_merge([$projectId], $used_notes);
+                        $placeholders = implode(',', array_fill(0, count($used_notes), '?'));
+                        $result = $this->query(
+                            "SELECT record, field_name, CHAR_LENGTH(value) AS val_len 
+                             FROM redcap_data 
+                             WHERE project_id = ? AND field_name IN ($placeholders) AND value IS NOT NULL AND value != ''",
+                            $params
+                        );
+                        while ($row = $result->fetch_assoc()) {
+                            $field = $row['field_name'];
+                            $rec = $row['record'];
+                            $lenRatio = $row['val_len'] / (2 << 15);
+                            $current = $structured[$field]["str $rec"] ?? 0;
+                            if ($lenRatio > $current) {
+                                $structured[$field]["str $rec"] = $lenRatio;
+                            }
                         }
                     }
                 }
             }
 
-            // Merge data
             $data = array_merge($data, [
                 "notesFields" => $notes_fields,
                 "metrics" => $structured,
             ]);
         }
 
-        // Pass down to JS
-        $data = json_encode($data);
-        echo "<script>Object.assign({$this->getJavascriptModuleObjectName()}, {$data});</script>";
+        $json = json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+        echo "<script>Object.assign({$this->getJavascriptModuleObjectName()}, {$json});</script>";
     }
 
     /*
-    HTML to include all js libraries for the calendar
+    HTML to include JS libraries
     */
-    private function includeJSclndr()
+    private function includeLibraries()
     {
-        echo "<script src={$this->getUrl('js/lodash.min.js')}></script>";
-        echo "<script src={$this->getUrl('js/moment.min.js')}></script>";
-        echo "<script src={$this->getUrl('js/moment-range.min.js')}></script>";
-        echo "<script src={$this->getUrl('js/clndr.min.js')}></script>";
+        echo "<script src='{$this->getUrl('js/dayjs.min.js')}'></script>";
     }
 
     /*
@@ -237,14 +267,14 @@ class CalendarQuestions extends AbstractExternalModule
     */
     private function includeJs($path)
     {
-        echo "<script src={$this->getUrl('js/' .$path)}></script>";
+        echo "<script src='{$this->getUrl('js/' . $path)}'></script>";
     }
 
     /*
-    HTML to include the style sheet
+    HTML to include stylesheet
     */
     private function includeCSS()
     {
-        echo "<link rel='stylesheet' href={$this->getUrl("style.css")}>";
+        echo "<link rel='stylesheet' href='{$this->getUrl('style.css')}'>";
     }
 }

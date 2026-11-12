@@ -80,7 +80,7 @@
   color: #4f4f4f;
   background-color: #ebebeb;
   border-bottom: 2px solid white;
-  background-image: url('https://kylestetz.github.io/CLNDR/css/./triangle.svg');
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 114 66'%3E%3Cpolygon fill='%23E8E8E8' points='114,0 0,66 114,66'/%3E%3C/svg%3E");
   background-size: cover;
   background-position: center;
 }
@@ -268,4 +268,21 @@
 
 .calQMetrics {
   border-top: none;
+}
+
+@media (max-width: 768px) {
+  .clndr .clndr-grid {
+    float: none;
+    width: 100%;
+    border-right: none;
+  }
+  .clndr .event-listing {
+    float: none;
+    width: 100%;
+  }
+  .clndr .markAllButton,
+  .clndr .markAllButtonGroup {
+    position: static;
+    margin: 10px 0;
+  }
 }

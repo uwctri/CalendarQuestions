@@ -24,6 +24,11 @@
                     "required": true
                 },
                 {
+                    "key": "event",
+                    "name": "<b>Event</b><br>Optional. Limit this calendar to a specific event (allows using the same notes field across multiple events)",
+                    "type": "event-list"
+                },
+                {
                     "key": "compress",
                     "name": "<b>Use data compression</b><br>By default, data is stored in a JSON format. This option will compress the data to save space when the the calendar field is near the character limit. Only enable this feature if you are near the character limit and understand how to work with compressed data.",
                     "type": "checkbox"
@@ -36,6 +41,11 @@
                 {
                     "key": "stats",
                     "name": "<b>Show Calendar Stats</b><br>Show data entry stats under the calendar",
+                    "type": "checkbox"
+                },
+                {
+                    "key": "always-show-data",
+                    "name": "<b>Option to Always Show Data</b><br>Always display questions that contain existing data",
                     "type": "checkbox"
                 },
                 {
